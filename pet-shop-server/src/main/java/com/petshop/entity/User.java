@@ -31,4 +31,6 @@ public class User extends BaseEntity {
     private String role;
     /** 账户状态：0-正常, 1-禁用 */
     private Integer status;
+
+
 }

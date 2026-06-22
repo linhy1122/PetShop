@@ -1,7 +1,7 @@
 package com.petshop.service.impl;
 
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.crypto.SecureUtil;
+import cn.hutool.crypto.digest.BCrypt;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.petshop.entity.User;
@@ -27,7 +27,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
         User user = new User();
         user.setUsername(username);
-        user.setPassword(SecureUtil.bcrypt(password)); // TODO: 改用Spring Security加密
+        user.setPassword(BCrypt.hashpw(password));
         user.setPhone(phone);
         user.setNickname("用户" + UUID.randomUUID().toString().substring(0, 8));
         user.setMemberLevel(0);
@@ -49,7 +49,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         }
 
         // 验证密码（使用hutool的bcrypt）
-        if (!SecureUtil.bcryptCheck(password, user.getPassword())) {
+        if (!BCrypt.checkpw(password, user.getPassword())) {
             throw new RuntimeException("用户名或密码错误");
         }
 
@@ -70,10 +70,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         if (user == null) {
             throw new RuntimeException("用户不存在");
         }
-        if (!SecureUtil.bcryptCheck(oldPassword, user.getPassword())) {
+        if (!BCrypt.checkpw(oldPassword, user.getPassword())) {
             throw new RuntimeException("原密码错误");
         }
-        user.setPassword(SecureUtil.bcrypt(newPassword));
+        user.setPassword(BCrypt.hashpw(newPassword));
         updateById(user);
     }
 
