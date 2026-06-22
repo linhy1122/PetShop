@@ -6,13 +6,15 @@
 USE petshop;
 
 -- ==================== 用户 ====================
--- 密码: 123456（请通过注册接口 /api/user/register 创建用户，密码会自动 BCrypt 加密）
--- 这里使用 INSERT IGNORE 避免和 schema.sql 中已有的数据冲突
-INSERT IGNORE INTO t_user (username, password, nickname, phone, email, member_level, role, status) VALUES
-('zhangsan',  '$2a$10$0TkO4LbyOh0qHk15J0oY2uywVYGOdjpD07HwVf6DCDt3bZXzsNwF.', '张三',      '13800000001', 'zhangsan@qq.com',  0, 'user', 0),
-('lisi',      '$2a$10$0TkO4LbyOh0qHk15J0oY2uywVYGOdjpD07HwVf6DCDt3bZXzsNwF.', '李四',      '13800000002', 'lisi@qq.com',      1, 'user', 0),
-('wangwu',    '$2a$10$0TkO4LbyOh0qHk15J0oY2uywVYGOdjpD07HwVf6DCDt3bZXzsNwF.', '王五',      '13800000003', 'wangwu@qq.com',    2, 'user', 0),
-('zhaoliu',   '$2a$10$0TkO4LbyOh0qHk15J0oY2uywVYGOdjpD07HwVf6DCDt3bZXzsNwF.', '赵六',      '13800000004', 'zhaoliu@qq.com',   0, 'user', 0);
+-- 密码: 123456 / BCrypt 加密
+DELETE FROM t_user WHERE username IN ('admin', 'zhangsan', 'lisi', 'wangwu', 'zhaoliu');
+
+INSERT INTO t_user (username, password, nickname, phone, email, member_level, role, status) VALUES
+('admin',     '$2a$10$0TkO4LbyOh0qHk15J0oY2uywVYGOdjpD07HwVf6DCDt3bZXzsNwF.', '系统管理员', '13800000000', 'admin@petshop.cn', 3, 'admin', 0),
+('zhangsan',  '$2a$10$0TkO4LbyOh0qHk15J0oY2uywVYGOdjpD07HwVf6DCDt3bZXzsNwF.', '张三',       '13800000001', 'zhangsan@qq.com',  0, 'user', 0),
+('lisi',      '$2a$10$0TkO4LbyOh0qHk15J0oY2uywVYGOdjpD07HwVf6DCDt3bZXzsNwF.', '李四',       '13800000002', 'lisi@qq.com',      1, 'user', 0),
+('wangwu',    '$2a$10$0TkO4LbyOh0qHk15J0oY2uywVYGOdjpD07HwVf6DCDt3bZXzsNwF.', '王五',       '13800000003', 'wangwu@qq.com',    2, 'user', 0),
+('zhaoliu',   '$2a$10$0TkO4LbyOh0qHk15J0oY2uywVYGOdjpD07HwVf6DCDt3bZXzsNwF.', '赵六',       '13800000004', 'zhaoliu@qq.com',   0, 'user', 0);
 
 -- ==================== 收货地址 ====================
 INSERT INTO t_address (user_id, receiver_name, receiver_phone, province, city, district, detail, is_default) VALUES
