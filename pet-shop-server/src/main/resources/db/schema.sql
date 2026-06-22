@@ -211,12 +211,12 @@ CREATE TABLE IF NOT EXISTS t_message (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='消息通知表';
 
 -- ==================== 初始数据 ====================
--- 管理员账号（密码：admin123，BCrypt加密）
-INSERT INTO t_user (username, password, nickname, role, member_level) VALUES
-('admin', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iAt6Z5Eh', '系统管理员', 'admin', 3);
+-- 管理员账号（密码：123456，BCrypt加密）
+INSERT IGNORE INTO t_user (username, password, nickname, role, member_level) VALUES
+('admin', '$2a$10$0TkO4LbyOh0qHk15J0oY2uywVYGOdjpD07HwVf6DCDt3bZXzsNwF.', '系统管理员', 'admin', 3);
 
 -- 默认商品分类
-INSERT INTO t_category (name, type, sort) VALUES
+INSERT IGNORE INTO t_category (name, type, sort) VALUES
 ('狗狗', 1, 1),
 ('猫咪', 1, 2),
 ('小宠', 1, 3),
