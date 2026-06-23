@@ -1,69 +1,137 @@
 <template>
-  <div class="video-list-page">
-    <div class="container">
-      <h2>宠物视频</h2>
-      <div class="video-grid" v-loading="loading">
-        <el-empty v-if="!loading && videos.length === 0" description="暂无视频" />
-        <el-card v-for="v in videos" :key="v.id" class="video-card"
-                 shadow="hover" @click="$router.push(`/video/${v.id}`)">
-          <div class="video-cover">
-            <img :src="v.cover || '/vite.svg'" :alt="v.title" />
-            <div class="play-icon">▶</div>
-            <span class="duration">{{ formatDuration(v.duration) }}</span>
-          </div>
-          <div class="video-info">
-            <h4>{{ v.title }}</h4>
-            <div class="video-stats">
-              <span>👁 {{ v.viewCount }}</span>
-              <span>👍 {{ v.likeCount }}</span>
-            </div>
-          </div>
-        </el-card>
+  <div class="page-shell video-page">
+    <section class="hero-card video-hero">
+      <div>
+        <div class="status-pill">Video inspiration</div>
+        <h1 class="hero-title" style="margin-top: 12px;">宠物视频</h1>
+        <p class="hero-desc">搜索视频、浏览热点内容、跳转商品详情，打造“看视频—买商品”闭环。</p>
       </div>
-    </div>
+      <div class="video-search">
+        <el-input v-model="keyword" placeholder="搜索视频标题" size="large" clearable @change="fetchVideos">
+          <template #prefix><el-icon><Search /></el-icon></template>
+        </el-input>
+        <el-button type="primary" size="large" @click="fetchVideos">搜索</el-button>
+      </div>
+    </section>
+
+    <section class="page-section">
+      <div class="page-grid-3" v-loading="loading">
+        <article v-for="video in videos" :key="video.id" class="pet-card video-card" @click="$router.push(`/video/${video.id}`)">
+          <div class="video-cover">
+            <img :src="video.cover || '/vite.svg'" :alt="video.title" />
+            <div class="play-icon">▶</div>
+          </div>
+          <div class="video-body">
+            <div class="video-top">
+              <h3>{{ video.title }}</h3>
+              <span class="muted">{{ video.viewCount || 0 }} 播放</span>
+            </div>
+            <p class="muted">{{ video.description || '宠物日常、护理技巧和商品种草。' }}</p>
+          </div>
+        </article>
+      </div>
+
+      <el-empty v-if="!loading && videos.length === 0" description="暂无视频" />
+    </section>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { onMounted, ref } from 'vue'
 import { getVideoListApi } from '@/api/video'
+import { ElMessage } from 'element-plus'
 
 const videos = ref([])
 const loading = ref(false)
+const keyword = ref('')
 
-onMounted(async () => {
+onMounted(fetchVideos)
+
+async function fetchVideos() {
   loading.value = true
   try {
-    const res = await getVideoListApi({ size: 20 })
-    videos.value = res.data?.records || []
-  } finally { loading.value = false }
-})
-
-function formatDuration(sec) {
-  if (!sec) return '00:00'
-  const m = Math.floor(sec / 60)
-  const s = sec % 60
-  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+    const response = await getVideoListApi({ size: 20 })
+    const list = response.data?.records || []
+    const key = keyword.value.trim().toLowerCase()
+    videos.value = key
+      ? list.filter((item) => String(item.title || '').toLowerCase().includes(key))
+      : list
+  } catch (error) {
+    videos.value = []
+    ElMessage.warning('加载视频失败')
+  } finally {
+    loading.value = false
+  }
 }
 </script>
 
 <style scoped>
-.container { max-width: 1200px; margin: 0 auto; padding: 20px; }
-h2 { margin-bottom: 20px; }
-.video-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
-.video-card { cursor: pointer; }
-.video-cover { position: relative; height: 180px; overflow: hidden; border-radius: 8px; }
-.video-cover img { width: 100%; height: 100%; object-fit: cover; }
+.video-hero {
+  padding: 24px;
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: end;
+}
+
+.video-search {
+  display: flex;
+  gap: 12px;
+  min-width: 420px;
+}
+
+.video-card {
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.video-cover {
+  position: relative;
+  height: 210px;
+}
+
+.video-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .play-icon {
-  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-  width: 48px; height: 48px; background: rgba(0,0,0,0.6); border-radius: 50%;
-  display: flex; align-items: center; justify-content: center; color: #fff; font-size: 20px;
+  position: absolute;
+  inset: 50% auto auto 50%;
+  transform: translate(-50%, -50%);
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  font-size: 18px;
 }
-.duration {
-  position: absolute; bottom: 8px; right: 8px;
-  background: rgba(0,0,0,0.7); color: #fff; padding: 2px 8px; border-radius: 4px; font-size: 12px;
+
+.video-body {
+  padding: 16px;
 }
-.video-info { padding: 12px 0; }
-.video-info h4 { font-size: 15px; margin-bottom: 8px; }
-.video-stats { display: flex; gap: 16px; color: #999; font-size: 13px; }
+
+.video-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: start;
+  margin-bottom: 10px;
+}
+
+@media (max-width: 1024px) {
+  .video-hero {
+    flex-direction: column;
+    align-items: start;
+  }
+
+  .video-search {
+    width: 100%;
+    min-width: 0;
+    flex-direction: column;
+  }
+}
 </style>

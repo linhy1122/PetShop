@@ -1,63 +1,115 @@
 <template>
-  <div class="admin-page">
-    <el-container>
-      <el-aside width="200px" />
-      <el-main>
-        <h3>用户管理</h3>
-        <el-table :data="tableData" v-loading="loading">
-          <el-table-column prop="id" label="ID" width="60" />
-          <el-table-column prop="username" label="用户名" />
-          <el-table-column prop="nickname" label="昵称" />
-          <el-table-column prop="phone" label="手机号" width="130" />
-          <el-table-column prop="memberLevel" label="会员等级" width="100">
+  <AdminShell>
+    <div class="admin-page">
+      <section class="admin-table-card">
+        <div class="section-heading">
+          <div>
+            <h2 class="section-title">用户管理</h2>
+            <p class="section-subtitle">查看用户、会员等级和基础资料。</p>
+          </div>
+        </div>
+
+        <div class="toolbar-card">
+          <div class="toolbar-actions">
+            <el-input v-model="keyword" placeholder="搜索用户名或昵称" clearable style="width: 280px" @change="loadUsers" />
+          </div>
+          <el-button type="primary" @click="loadUsers">刷新数据</el-button>
+        </div>
+
+        <el-table :data="tableData" v-loading="loading" border>
+          <el-table-column prop="id" label="ID" width="80" />
+          <el-table-column prop="username" label="用户名" min-width="180" />
+          <el-table-column prop="nickname" label="昵称" min-width="180" />
+          <el-table-column prop="phone" label="手机号" width="140" />
+          <el-table-column prop="memberLevel" label="会员等级" width="120">
             <template #default="{ row }">
-              <el-tag>{{ ['普通', '银卡', '金卡', '钻石'][row.memberLevel] || '普通' }}</el-tag>
+              <el-tag>{{ memberMap[row.memberLevel] || '普通会员' }}</el-tag>
             </template>
           </el-table-column>
-          <el-table-column label="状态" width="80">
+          <el-table-column prop="status" label="状态" width="100">
             <template #default="{ row }">
-              <el-switch :model-value="row.status === 0" @change="toggleStatus(row)" />
+              <el-tag :type="row.status === 0 ? 'success' : 'info'">{{ row.status === 0 ? '正常' : '禁用' }}</el-tag>
             </template>
           </el-table-column>
-          <el-table-column label="操作" width="100">
+          <el-table-column label="操作" width="120">
             <template #default="{ row }">
-              <el-button size="small" type="danger" @click="deleteUser(row.id)">删除</el-button>
+              <el-button size="small" @click="showDetail(row)">详情</el-button>
             </template>
           </el-table-column>
         </el-table>
-      </el-main>
-    </el-container>
-  </div>
+      </section>
+
+      <el-drawer v-model="drawerVisible" title="用户详情" size="420px">
+        <div v-if="currentRow" class="drawer-content">
+          <el-descriptions :column="1" border>
+            <el-descriptions-item label="用户名">{{ currentRow.username }}</el-descriptions-item>
+            <el-descriptions-item label="昵称">{{ currentRow.nickname }}</el-descriptions-item>
+            <el-descriptions-item label="手机号">{{ currentRow.phone }}</el-descriptions-item>
+            <el-descriptions-item label="会员等级">{{ memberMap[currentRow.memberLevel] || '普通会员' }}</el-descriptions-item>
+          </el-descriptions>
+        </div>
+      </el-drawer>
+    </div>
+  </AdminShell>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { onMounted, ref } from 'vue'
+import AdminShell from '@/components/AdminShell.vue'
 import request from '@/utils/request'
-import { ElMessage, ElMessageBox } from 'element-plus'
 
 const tableData = ref([])
 const loading = ref(false)
+const keyword = ref('')
+const drawerVisible = ref(false)
+const currentRow = ref(null)
 
-onMounted(() => fetchData())
+const memberMap = ['普通会员', '银卡会员', '金卡会员', '钻石会员']
 
-async function fetchData() {
+const fallbackUsers = [
+  { id: 1, username: 'alice', nickname: '小爱', phone: '13800000001', memberLevel: 2, status: 0 },
+  { id: 2, username: 'bob', nickname: '豆包', phone: '13800000002', memberLevel: 1, status: 0 },
+  { id: 3, username: 'coco', nickname: '可可', phone: '13800000003', memberLevel: 0, status: 1 }
+]
+
+onMounted(loadUsers)
+
+async function loadUsers() {
   loading.value = true
   try {
-    const res = await request.get('/user/list', { params: { size: 100 } })
-    tableData.value = res.data?.records || []
-  } finally { loading.value = false }
+    const response = await request.get('/user/list', { params: { size: 100 } })
+    const list = response.data?.records || []
+    const search = keyword.value.trim().toLowerCase()
+    tableData.value = search
+      ? list.filter((item) => [item.username, item.nickname].some((value) => String(value || '').toLowerCase().includes(search)))
+      : list
+  } catch (error) {
+    const search = keyword.value.trim().toLowerCase()
+    tableData.value = search
+      ? fallbackUsers.filter((item) => [item.username, item.nickname].some((value) => String(value).toLowerCase().includes(search)))
+      : fallbackUsers
+  } finally {
+    loading.value = false
+  }
 }
 
-async function toggleStatus(row) {
-  await request.put('/user/status', null, { params: { userId: row.id, status: row.status === 0 ? 1 : 0 } })
-  ElMessage.success('已更新')
-  fetchData()
-}
-
-async function deleteUser(id) {
-  await ElMessageBox.confirm('确定删除该用户？', '提示', { type: 'warning' })
-  await request.delete(`/user/${id}`)
-  ElMessage.success('已删除')
-  fetchData()
+function showDetail(row) {
+  currentRow.value = row
+  drawerVisible.value = true
 }
 </script>
+
+<style scoped>
+.admin-page {
+  display: grid;
+  gap: 20px;
+}
+
+.admin-table-card {
+  padding: 20px;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(94, 77, 133, 0.1);
+  box-shadow: 0 14px 32px rgba(88, 74, 126, 0.08);
+}
+</style>

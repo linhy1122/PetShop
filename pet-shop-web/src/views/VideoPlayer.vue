@@ -1,76 +1,142 @@
 <template>
-  <div class="video-player-page">
-    <div class="container" v-loading="loading">
-      <div v-if="video">
-        <div class="player">
-          <!-- 简易视频播放器（实际项目可替换为 video.js 等专业播放器） -->
-          <video :src="video.videoUrl" controls :poster="video.cover"
-                 style="width: 100%; max-height: 500px; border-radius: 12px; background: #000;">
-            您的浏览器不支持视频播放
-          </video>
-        </div>
-        <h2>{{ video.title }}</h2>
+  <div class="page-shell video-player-page" v-loading="loading">
+    <section v-if="video" class="hero-card player-hero">
+      <div class="player-main">
+        <video :src="video.videoUrl" controls :poster="video.cover" class="player-video">
+          你的浏览器不支持视频播放
+        </video>
+      </div>
+
+      <div class="player-side">
+        <div class="status-pill">Video detail</div>
+        <h1>{{ video.title }}</h1>
+        <p class="muted">{{ video.description || '视频播放、商品推荐和跳转购买入口。' }}</p>
         <div class="video-meta">
-          <span>👁 {{ video.viewCount }} 次播放</span>
-          <el-button :icon="Like" size="small" @click="handleLike">点赞 {{ video.likeCount }}</el-button>
+          <span>播放 {{ video.viewCount || 0 }}</span>
+          <span>点赞 {{ video.likeCount || 0 }}</span>
         </div>
-        <p class="description">{{ video.description }}</p>
-        <!-- 关联商品 -->
-        <div v-if="linkedProduct" class="linked-product">
-          <h4>视频相关商品</h4>
-          <el-card class="product-link" @click="$router.push(`/product/${linkedProduct.id}`)">
-            <img :src="linkedProduct.mainImage || '/vite.svg'" />
-            <div>
-              <h5>{{ linkedProduct.name }}</h5>
-              <span class="price">¥{{ linkedProduct.price }}</span>
-            </div>
-          </el-card>
+        <div class="action-row">
+          <el-button :icon="ThumbUp" @click="handleLike">点赞</el-button>
+          <el-button type="primary" @click="$router.push('/product/list')">去逛商品</el-button>
         </div>
       </div>
-    </div>
+    </section>
+
+    <section v-if="linkedProduct" class="page-section panel-card">
+      <div class="section-heading">
+        <div>
+          <h2 class="section-title">推荐商品</h2>
+          <p class="section-subtitle">视频内容关联的商品可直接跳转详情页。</p>
+        </div>
+      </div>
+
+      <article class="linked-product" @click="$router.push(`/product/${linkedProduct.id}`)">
+        <img :src="linkedProduct.mainImage || '/vite.svg'" class="linked-thumb" />
+        <div>
+          <strong>{{ linkedProduct.name }}</strong>
+          <p class="muted">{{ linkedProduct.description }}</p>
+          <div class="price">¥{{ linkedProduct.price }}</div>
+        </div>
+      </article>
+    </section>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
+import { ElMessage } from 'element-plus'
 import { getVideoDetailApi, likeVideoApi } from '@/api/video'
 import { getProductDetailApi } from '@/api/product'
-import { ElMessage } from 'element-plus'
 
 const route = useRoute()
+const loading = ref(false)
 const video = ref(null)
 const linkedProduct = ref(null)
-const loading = ref(false)
 
 onMounted(async () => {
   loading.value = true
   try {
-    video.value = (await getVideoDetailApi(route.params.id)).data
-    if (video.value?.productId) {
-      try {
-        linkedProduct.value = (await getProductDetailApi(video.value.productId)).data
-      } catch (e) { /* ignore */ }
+    const response = await getVideoDetailApi(route.params.id)
+    video.value = response.data
+    if (response.data?.productId) {
+      const productRes = await getProductDetailApi(response.data.productId)
+      linkedProduct.value = productRes.data
     }
-  } finally { loading.value = false }
+  } catch (error) {
+    ElMessage.error('加载视频失败')
+  } finally {
+    loading.value = false
+  }
 })
 
 async function handleLike() {
   try {
     await likeVideoApi(video.value.id)
-    video.value.likeCount++
+    video.value.likeCount = Number(video.value.likeCount || 0) + 1
     ElMessage.success('已点赞')
-  } catch (e) { ElMessage.error(e.message) }
+  } catch (error) {
+    ElMessage.error(error.message || '点赞失败')
+  }
 }
 </script>
 
 <style scoped>
-.container { max-width: 900px; margin: 0 auto; padding: 20px; }
-h2 { margin: 20px 0 12px; }
-.video-meta { display: flex; align-items: center; gap: 20px; margin-bottom: 16px; color: #666; }
-.description { color: #666; line-height: 1.8; }
-.linked-product { margin-top: 30px; }
-.product-link { display: flex; gap: 16px; align-items: center; cursor: pointer; margin-top: 12px; }
-.product-link img { width: 80px; height: 80px; object-fit: cover; border-radius: 8px; }
-.price { color: #f56c6c; font-weight: bold; }
+.player-hero {
+  padding: 24px;
+  display: grid;
+  grid-template-columns: 1.25fr 0.75fr;
+  gap: 24px;
+}
+
+.player-video {
+  width: 100%;
+  max-height: 560px;
+  border-radius: 24px;
+  background: #000;
+}
+
+.player-side {
+  display: grid;
+  align-content: start;
+  gap: 14px;
+}
+
+.player-side h1 {
+  font-size: 30px;
+}
+
+.video-meta {
+  display: flex;
+  gap: 14px;
+  color: var(--pet-text-soft);
+}
+
+.linked-product {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 16px;
+  align-items: center;
+  cursor: pointer;
+}
+
+.linked-thumb {
+  width: 120px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 20px;
+}
+
+.price {
+  margin-top: 10px;
+  color: var(--pet-primary);
+  font-size: 22px;
+  font-weight: 800;
+}
+
+@media (max-width: 1024px) {
+  .player-hero {
+    grid-template-columns: 1fr;
+  }
+}
 </style>
