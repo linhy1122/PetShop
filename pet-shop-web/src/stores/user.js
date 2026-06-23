@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { loginApi, registerApi, getUserInfoApi } from '@/api/user'
+import { loginApi, registerApi, getUserInfoApi, getGithubAuthUrl } from '@/api/user'
 
 export const useUserStore = defineStore('user', () => {
   const token = ref(localStorage.getItem('token') || '')
@@ -25,6 +25,11 @@ export const useUserStore = defineStore('user', () => {
     return await registerApi(username, password, phone)
   }
 
+  // GitHub OAuth 登录（跳转到GitHub授权页）
+  function githubLogin() {
+    window.location.href = getGithubAuthUrl()
+  }
+
   // 退出
   function logout() {
     token.value = ''
@@ -37,5 +42,5 @@ export const useUserStore = defineStore('user', () => {
   const isLoggedIn = () => !!token.value
   const isAdmin = () => userInfo.value?.role === 'admin'
 
-  return { token, userInfo, login, register, logout, isLoggedIn, isAdmin }
+  return { token, userInfo, login, register, githubLogin, logout, isLoggedIn, isAdmin }
 })

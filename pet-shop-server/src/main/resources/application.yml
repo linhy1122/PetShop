@@ -63,6 +63,13 @@ ai:
   api-key: sk-ws-H.RPPLIEI.3QlU.MEUCIQDxFtqpcCdGapmg85C3lLNN6OWImZinv_FeEruI5vj6vAIgK4vUs7Kxj0QHZ8isjg2xKBhJGapKGd-oXJlwp4kzeKA
   api-url: https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation
 
+# GitHub OAuth 配置
+github:
+  oauth:
+    client-id: Ov23li359yoc6iYGcVwW
+    client-secret: 59bf325d4173b90fc8d5f855b144cdad1d35d680
+    redirect-uri: http://localhost:8080/oauth/github/callback
+
 # 日志
 logging:
   level:

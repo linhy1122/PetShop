@@ -9,6 +9,7 @@ import com.petshop.mapper.UserMapper;
 import com.petshop.service.UserService;
 import org.springframework.stereotype.Service;
 
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -97,5 +98,58 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             dbUser.setAvatar(user.getAvatar());
         }
         updateById(dbUser);
+    }
+
+    @Override
+    public User findByGithubId(Long githubId) {
+        LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(User::getGithubId, githubId);
+        return getOne(wrapper);
+    }
+
+    @Override
+    public Map<String, Object> loginByGithub(Long githubId, String githubUsername, String avatarUrl, String email) {
+        User user = findByGithubId(githubId);
+        if (user == null) {
+            // 自动注册新用户：递进式用户名策略，避免与普通用户冲突
+            String username = githubUsername;
+            if (StrUtil.isBlank(username)) {
+                username = "gh_" + githubId;
+            } else if (findByUsername(username) != null) {
+                // 原始用户名已被占用，尝试加 _gh 后缀
+                String alt = username + "_gh";
+                if (findByUsername(alt) != null) {
+                    // 仍被占用，兜底使用 GitHub ID（全局唯一）
+                    username = "gh_" + githubId;
+                } else {
+                    username = alt;
+                }
+            }
+
+            user = new User();
+            user.setUsername(username);
+            user.setPassword(BCrypt.hashpw(UUID.randomUUID().toString()));
+            user.setNickname(StrUtil.isNotBlank(githubUsername) ? githubUsername : ("GitHub用户" + githubId));
+            user.setAvatar(StrUtil.isNotBlank(avatarUrl) ? avatarUrl : "");
+            user.setEmail(StrUtil.isNotBlank(email) ? email : "");
+            user.setGithubId(githubId);
+            user.setPhone("");
+            user.setMemberLevel(0);
+            user.setRole("user");
+            user.setStatus(0);
+            save(user);
+        }
+
+        if (user.getStatus() == 1) {
+            throw new RuntimeException("账户已被禁用");
+        }
+
+        String token = "token-" + UUID.randomUUID();
+        return Map.of(
+                "token", token,
+                "userId", user.getId(),
+                "nickname", user.getNickname(),
+                "role", user.getRole()
+        );
     }
 }

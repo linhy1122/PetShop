@@ -24,3 +24,8 @@ export function updateProfileApi(data) {
 export function updatePasswordApi(userId, oldPassword, newPassword) {
   return request.put('/user/password', null, { params: { userId, oldPassword, newPassword } })
 }
+
+/** GitHub OAuth 授权地址 */
+export function getGithubAuthUrl() {
+  return 'http://localhost:8080/oauth/github/authorize'
+}

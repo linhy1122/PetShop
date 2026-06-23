@@ -22,4 +22,10 @@ public interface UserService extends IService<User> {
 
     /** 更新个人信息 */
     void updateProfile(User user);
+
+    /** 根据GitHub ID查询用户 */
+    User findByGithubId(Long githubId);
+
+    /** GitHub OAuth登录（自动注册），返回 token + 用户信息 */
+    java.util.Map<String, Object> loginByGithub(Long githubId, String githubUsername, String avatarUrl, String email);
 }
