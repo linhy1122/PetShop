@@ -20,10 +20,13 @@ CREATE TABLE IF NOT EXISTS t_user (
     member_level TINYINT        DEFAULT 0                   COMMENT '会员等级：0-普通, 1-银卡, 2-金卡, 3-钻石',
     role        VARCHAR(20)     DEFAULT 'user'              COMMENT '角色：user-用户, admin-管理员',
     status      TINYINT         DEFAULT 0                   COMMENT '状态：0-正常, 1-禁用',
+    github_id   BIGINT          DEFAULT NULL                COMMENT 'GitHub用户ID',
     create_time DATETIME        DEFAULT CURRENT_TIMESTAMP   COMMENT '创建时间',
     update_time DATETIME        DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     deleted     TINYINT         DEFAULT 0                   COMMENT '逻辑删除：0-否, 1-是'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户表';
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_github_id ON t_user (github_id);
 
 -- ==================== 收货地址表 ====================
 CREATE TABLE IF NOT EXISTS t_address (

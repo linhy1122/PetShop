@@ -20,6 +20,12 @@ const routes = [
     meta: { title: '注册' }
   },
   {
+    path: '/oauth/callback',
+    name: 'OAuthCallback',
+    component: () => import('@/views/OAuthCallback.vue'),
+    meta: { title: '登录中...' }
+  },
+  {
     path: '/product/list',
     name: 'ProductList',
     component: () => import('@/views/ProductList.vue'),
