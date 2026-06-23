@@ -56,9 +56,9 @@ knife4j:
 
 # 高德地图 API 配置
 amap:
-  key: your-amap-key-here
+  key: d9455fb3e79155f6bc91bad0f0c7deb1
 
-# AI 大模型配置
+# AI 大模型配置（DeepSeek）
 ai:
   api-key: sk-ws-H.RPPLIEI.3QlU.MEUCIQDxFtqpcCdGapmg85C3lLNN6OWImZinv_FeEruI5vj6vAIgK4vUs7Kxj0QHZ8isjg2xKBhJGapKGd-oXJlwp4kzeKA
   api-url: https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation
