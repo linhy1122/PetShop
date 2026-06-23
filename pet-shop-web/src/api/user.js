@@ -1,13 +1,23 @@
 import request from '@/utils/request'
 
 /** 登录 */
-export function loginApi(username, password) {
-  return request.post('/user/login', { username, password })
+export function loginApi(username, password, captchaKey, captchaX) {
+  return request.post('/user/login', { username, password, captchaKey, captchaX })
 }
 
 /** 注册 */
-export function registerApi(username, password, phone) {
-  return request.post('/user/register', { username, password, phone })
+export function registerApi(username, password, phone, captchaKey, captchaX) {
+  return request.post('/user/register', { username, password, phone, captchaKey, captchaX })
+}
+
+/** 获取图形验证码 */
+export function getCaptchaApi() {
+  return request.get('/captcha')
+}
+
+/** 校验滑块位置 */
+export function verifyCaptchaApi(captchaKey, captchaX) {
+  return request.post('/captcha/verify', { captchaKey, captchaX })
 }
 
 /** 获取用户信息 */

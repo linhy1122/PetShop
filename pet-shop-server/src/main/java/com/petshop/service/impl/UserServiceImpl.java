@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.petshop.entity.User;
 import com.petshop.mapper.UserMapper;
 import com.petshop.service.UserService;
+import com.petshop.util.CaptchaUtil;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
@@ -19,7 +20,10 @@ import java.util.UUID;
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
 
     @Override
-    public User register(String username, String password, String phone) {
+    public User register(String username, String password, String phone, String captchaKey, Integer captchaX) {
+        // 验证滑块验证码
+        verifyCaptcha(captchaKey, captchaX);
+
         // 检查用户名是否已存在
         User exist = findByUsername(username);
         if (exist != null) {
@@ -40,7 +44,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     @Override
-    public String login(String username, String password) {
+    public String login(String username, String password, String captchaKey, Integer captchaX) {
+        // 验证滑块验证码
+        verifyCaptcha(captchaKey, captchaX);
+
         User user = findByUsername(username);
         if (user == null) {
             throw new RuntimeException("用户名或密码错误");
@@ -151,5 +158,15 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                 "nickname", user.getNickname(),
                 "role", user.getRole()
         );
+    }
+
+    /** 校验滑块验证码：解析签名token → 比对X位置 */
+    private void verifyCaptcha(String captchaKey, Integer captchaX) {
+        if (captchaX == null) {
+            throw new RuntimeException("请完成滑块验证");
+        }
+        if (!CaptchaUtil.verify(captchaKey, captchaX)) {
+            throw new RuntimeException("验证码验证失败，请重试");
+        }
     }
 }

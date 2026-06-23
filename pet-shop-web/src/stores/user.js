@@ -1,14 +1,14 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { loginApi, registerApi, getUserInfoApi, getGithubAuthUrl } from '@/api/user'
+import { loginApi, registerApi, getUserInfoApi, getGithubAuthUrl, getCaptchaApi } from '@/api/user'
 
 export const useUserStore = defineStore('user', () => {
   const token = ref(localStorage.getItem('token') || '')
   const userInfo = ref(JSON.parse(localStorage.getItem('userInfo') || 'null'))
 
   // 登录
-  async function login(username, password) {
-    const res = await loginApi(username, password)
+  async function login(username, password, captchaKey, captchaX) {
+    const res = await loginApi(username, password, captchaKey, captchaX)
     token.value = res.data.token
     userInfo.value = {
       userId: res.data.userId,
@@ -21,8 +21,8 @@ export const useUserStore = defineStore('user', () => {
   }
 
   // 注册
-  async function register(username, password, phone) {
-    return await registerApi(username, password, phone)
+  async function register(username, password, phone, captchaKey, captchaX) {
+    return await registerApi(username, password, phone, captchaKey, captchaX)
   }
 
   // GitHub OAuth 登录（跳转到GitHub授权页）
