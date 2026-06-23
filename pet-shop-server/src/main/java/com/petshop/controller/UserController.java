@@ -23,13 +23,15 @@ public class UserController {
 
     @PostMapping("/register")
     public Result<?> register(@Valid @RequestBody RegisterDto dto) {
-        User user = userService.register(dto.getUsername(), dto.getPassword(), dto.getPhone());
+        User user = userService.register(dto.getUsername(), dto.getPassword(), dto.getPhone(),
+                dto.getCaptchaKey(), dto.getCaptchaX());
         return Result.ok(Map.of("userId", user.getId()));
     }
 
     @PostMapping("/login")
     public Result<?> login(@Valid @RequestBody LoginDto dto) {
-        String token = userService.login(dto.getUsername(), dto.getPassword());
+        String token = userService.login(dto.getUsername(), dto.getPassword(),
+                dto.getCaptchaKey(), dto.getCaptchaX());
         User user = userService.findByUsername(dto.getUsername());
         return Result.ok(Map.of(
                 "token", token,

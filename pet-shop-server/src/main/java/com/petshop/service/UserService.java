@@ -9,10 +9,10 @@ import com.petshop.entity.User;
 public interface UserService extends IService<User> {
 
     /** 用户注册 */
-    User register(String username, String password, String phone);
+    User register(String username, String password, String phone, String captchaKey, Integer captchaX);
 
     /** 用户登录，返回token */
-    String login(String username, String password);
+    String login(String username, String password, String captchaKey, Integer captchaX);
 
     /** 根据用户名查询 */
     User findByUsername(String username);

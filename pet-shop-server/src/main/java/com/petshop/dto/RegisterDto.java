@@ -17,4 +17,9 @@ public class RegisterDto {
     private String password;
 
     private String phone;
+
+    @NotBlank(message = "验证码不能为空")
+    private String captchaKey;
+
+    private Integer captchaX;
 }
