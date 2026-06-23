@@ -1,0 +1,152 @@
+/* =============================================
+   PetShop 主题设计系统
+   ============================================= */
+
+:root {
+  /* ---- 主色调 ---- */
+  --color-primary:    #FF6B35;
+  --color-primary-h:  #FF8F5E;
+  --color-primary-d:  #E55A2B;
+  --color-secondary:  #004E64;
+  --color-accent:     #FFB347;
+
+  /* ---- 背景 ---- */
+  --bg-page:          #FDFBF7;
+  --bg-card:          #FFFFFF;
+  --bg-soft:          #FFF5ED;
+
+  /* ---- 文字 ---- */
+  --text-primary:     #1A1A2E;
+  --text-secondary:   #6B7280;
+  --text-muted:       #9CA3AF;
+
+  /* ---- 功能色 ---- */
+  --color-success:    #10B981;
+  --color-warning:    #F59E0B;
+  --color-danger:     #EF4444;
+  --color-info:       #3B82F6;
+
+  /* ---- 圆角 ---- */
+  --radius-sm:        8px;
+  --radius-md:        12px;
+  --radius-lg:        16px;
+  --radius-xl:        24px;
+
+  /* ---- 阴影 ---- */
+  --shadow-sm:        0 1px 3px rgba(26,26,46,0.06);
+  --shadow-md:        0 4px 16px rgba(26,26,46,0.08);
+  --shadow-lg:        0 12px 40px rgba(26,26,46,0.10);
+  --shadow-xl:        0 20px 60px rgba(26,26,46,0.12);
+
+  /* ---- 字体 ---- */
+  --font-display:     'PingFang SC', 'Microsoft YaHei', 'Helvetica Neue', sans-serif;
+  --font-body:        'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
+
+  /* ---- 间距 ---- */
+  --space-section:    64px;
+  --space-block:      32px;
+  --space-card:       24px;
+}
+
+/* ---- 全局重置 ---- */
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-body);
+  color: var(--text-primary);
+  background: var(--bg-page);
+  -webkit-font-smoothing: antialiased;
+  line-height: 1.6;
+}
+
+a { text-decoration: none; color: inherit; }
+
+/* ---- 覆盖 Element Plus 默认主题 ---- */
+:root {
+  --el-color-primary: var(--color-primary);
+  --el-color-primary-light-3: var(--color-primary-h);
+  --el-color-primary-dark-2: var(--color-primary-d);
+  --el-border-radius-base: var(--radius-sm);
+  --el-border-radius-round: var(--radius-xl);
+}
+
+/* ---- 通用容器 ---- */
+.page-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 20px;
+}
+
+/* ---- 章节标题 ---- */
+.section-title {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  color: var(--text-primary);
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+/* ---- 卡片样式 ---- */
+.pet-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+.pet-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* ---- 按钮 ---- */
+.btn-primary {
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-h) 100%);
+  color: #fff;
+  border: none;
+  padding: 12px 28px;
+  border-radius: var(--radius-md);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 4px 14px rgba(255,107,53,0.3);
+}
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255,107,53,0.4);
+}
+
+/* ---- 价格 ---- */
+.price-tag {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--color-primary);
+}
+.price-tag::before {
+  content: '¥';
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* ---- 标签 ---- */
+.pet-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* ---- 滚动条 ---- */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #9ca3af; }

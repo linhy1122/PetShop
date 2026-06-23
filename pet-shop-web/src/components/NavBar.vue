@@ -1,5 +1,5 @@
 <template>
-  <el-menu :default-active="activeIndex" class="navbar" mode="horizontal" router>
+  <el-menu :default-active="activeIndex" class="navbar" mode="horizontal" router  :ellipsis="false">
     <div class="nav-left">
       <router-link to="/" class="logo">
         <el-icon><ShoppingBag /></el-icon>
