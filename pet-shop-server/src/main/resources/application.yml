@@ -60,7 +60,7 @@ amap:
 
 # AI 大模型配置
 ai:
-  api-key: your-ai-api-key-here
+  api-key: sk-ws-H.RPPLIEI.3QlU.MEUCIQDxFtqpcCdGapmg85C3lLNN6OWImZinv_FeEruI5vj6vAIgK4vUs7Kxj0QHZ8isjg2xKBhJGapKGd-oXJlwp4kzeKA
   api-url: https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation
 
 # 日志
