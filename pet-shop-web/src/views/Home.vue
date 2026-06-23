@@ -1,7 +1,12 @@
 <template>
   <div class="home">
     <!-- 首页Banner -->
-    <section class="hero">
+    <div class="hero-wrapper">
+      <el-carousel height="500px" :interval="4000" arrow="always">
+        <el-carousel-item v-for="(img, idx) in carouselImages" :key="idx">
+          <div class="carousel-slide" :style="{ backgroundImage: `url(${img})` }"></div>
+        </el-carousel-item>
+      </el-carousel>
       <div class="hero-content">
         <h1>找到你最好的宠物伙伴</h1>
         <p>优质宠物 · 专业服务 · 周边好物 · 一站式宠物购物体验</p>
@@ -12,7 +17,7 @@
           宠物周边
         </el-button>
       </div>
-    </section>
+    </div>
 
     <!-- 分类导航 -->
     <section class="categories section">
@@ -53,6 +58,12 @@ import { getHotProductsApi } from '@/api/product'
 import { ElMessage } from 'element-plus'
 
 const hotProducts = ref([])
+const carouselImages = ref([
+  'https://picsum.photos/seed/pet1/1200/500',
+  'https://picsum.photos/seed/pet2/1200/500',
+  'https://picsum.photos/seed/pet3/1200/500',
+])
+
 const petCategories = ref([
   { id: 1, icon: '🐕', name: '狗狗' },
   { id: 2, icon: '🐱', name: '猫咪' },
@@ -74,12 +85,24 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.hero {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: #fff; text-align: center; padding: 80px 20px;
+.hero-wrapper {
+  position: relative;
 }
-.hero h1 { font-size: 36px; margin-bottom: 12px; }
-.hero p { font-size: 18px; opacity: 0.9; margin-bottom: 24px; }
+.carousel-slide {
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+}
+.hero-content {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  color: #fff;
+}
+.hero-content h1 { font-size: 36px; margin-bottom: 12px; }
+.hero-content p { font-size: 18px; opacity: 0.9; margin-bottom: 24px; }
 
 .section { max-width: 1200px; margin: 0 auto; padding: 40px 20px; }
 .section-title { font-size: 24px; margin-bottom: 20px; text-align: center; }
