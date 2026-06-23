@@ -60,9 +60,8 @@ amap:
 
 # AI 大模型配置（DeepSeek）
 ai:
-  api-key: your-deepseek-api-key
-  api-url: https://api.deepseek.com/v1/chat/completions
-  model: deepseek-chat
+  api-key: sk-ws-H.RPPLIEI.3QlU.MEUCIQDxFtqpcCdGapmg85C3lLNN6OWImZinv_FeEruI5vj6vAIgK4vUs7Kxj0QHZ8isjg2xKBhJGapKGd-oXJlwp4kzeKA
+  api-url: https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation
 
 # 日志
 logging:
