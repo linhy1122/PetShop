@@ -17,9 +17,7 @@
         <p>邮箱：service@petshop.cn</p>
       </div>
     </div>
-    <div class="footer-bottom">
-      <p>© 2025 PetShop 宠物商店 - 程序设计实训项目</p>
-    </div>
+
   </footer>
 </template>
 
@@ -27,9 +25,9 @@
 </script>
 
 <style scoped>
-.footer { background: #2c3e50; color: #ecf0f1; padding: 40px 20px 0; margin-top: 40px; }
+.footer { background: #2c3e50; color: #ecf0f1; padding: 40px 20px 0; margin-top: 40px; height: 220px; }
 .footer-content { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 30px; }
 .footer-section h4 { margin-bottom: 12px; font-size: 16px; }
 .footer-section p, .footer-section a { display: block; color: #bdc3c7; font-size: 14px; line-height: 2; }
-.footer-bottom { text-align: center; padding: 20px 0; margin-top: 30px; border-top: 1px solid #34495e; font-size: 13px; color: #7f8c8d; }
+
 </style>
