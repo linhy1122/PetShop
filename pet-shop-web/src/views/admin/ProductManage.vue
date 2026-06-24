@@ -3,6 +3,7 @@
     <h3>商品管理</h3>
 
     <!-- 工具栏 -->
+    
     <div class="toolbar">
       <el-select v-model="filterCategory" placeholder="分类筛选" clearable @change="fetchData" style="width:140px">
         <el-option v-for="c in categories" :key="c.id" :label="c.name" :value="c.id" />
@@ -103,8 +104,8 @@
         <!-- 商品主图 -->
         <el-form-item label="商品主图">
           <el-upload :action="uploadUrl" :headers="uploadHeaders"
-                     :show-file-list="false" :on-success="onMainImageSuccess"
-                     :before-upload="beforeUpload" accept="image/*">
+                     name="file" :show-file-list="false" :on-success="onMainImageSuccess"
+                     :on-error="onUploadError" :before-upload="beforeUpload" accept="image/*">
             <img v-if="form.mainImage" :src="form.mainImage"
                  style="width:120px;height:120px;object-fit:cover;border-radius:6px;cursor:pointer" />
             <el-button v-else type="primary" :icon="Plus">上传主图</el-button>
@@ -116,8 +117,9 @@
         <!-- 商品图集（多图） -->
         <el-form-item label="商品图集">
           <el-upload :action="uploadUrl" :headers="uploadHeaders"
-                     list-type="picture-card" :file-list="imageFileList"
-                     :on-success="onImagesSuccess" :before-upload="beforeUpload"
+                     name="file" list-type="picture-card" :file-list="imageFileList"
+                     :on-success="onImagesSuccess" :on-error="onUploadError"
+                     :before-upload="beforeUpload"
                      :on-remove="onImageRemove" :auto-upload="true"
                      accept="image/*" multiple>
             <el-icon><Plus /></el-icon>
@@ -357,7 +359,7 @@ async function submitForm() {
   if (!valid) return
 
   form.detail = editorRef.value?.innerHTML || ''
-  form.images = JSON.stringify(imageFileList.value.map(f => f.url || f.response?.data || ''))
+  form.images = JSON.stringify(imageFileList.value.map(f => f.url || ''))
 
   submitting.value = true
   try {
@@ -393,17 +395,22 @@ function onMainImageSuccess(res) {
 }
 
 function onImagesSuccess(res, _file, fileList) {
-  // 同步 el-upload 的 fileList 到我们的响应式数组
+  // 优先取服务器返回 URL，其次取已有 url（已有图片没有 response）
   imageFileList.value = fileList.map(f => ({
     name: f.name,
-    url: f.url || f.response?.data || ''
+    url: f.response?.data || f.url || ''
   }))
+}
+
+function onUploadError(err) {
+  const msg = err?.message || JSON.stringify(err) || '上传失败'
+  ElMessage.error('图片上传失败: ' + msg)
 }
 
 function onImageRemove(_file, fileList) {
   imageFileList.value = fileList.map(f => ({
     name: f.name,
-    url: f.url || f.response?.data || ''
+    url: f.response?.data || f.url || ''
   }))
 }
 
