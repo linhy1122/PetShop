@@ -34,7 +34,7 @@ const loading = ref(false)
 onMounted(async () => {
   loading.value = true
   try {
-    const res = await getVideoListApi({ size: 20 })
+    const res = await getVideoListApi({ size: 20, status: 1 })
     videos.value = res.data?.records || []
   } finally { loading.value = false }
 })
