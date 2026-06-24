@@ -20,6 +20,14 @@
     <!-- 表格 -->
     <el-table :data="tableData" style="margin-top: 16px" v-loading="loading">
       <el-table-column prop="id" label="ID" width="60" />
+      <el-table-column label="主图" width="80" align="center">
+        <template #default="{ row }">
+          <el-image v-if="row.mainImage" :src="row.mainImage"
+                    :preview-src-list="[row.mainImage]" fit="cover"
+                    class="table-thumb" />
+          <span v-else class="no-image">—</span>
+        </template>
+      </el-table-column>
       <el-table-column prop="name" label="商品名" min-width="140" show-overflow-tooltip />
       <el-table-column label="分类" width="90">
         <template #default="{ row }">{{ getCategoryName(row.categoryId) }}</template>
@@ -456,6 +464,21 @@ async function handleDelete(id) {
   display: flex;
   justify-content: flex-end;
   margin-top: 16px;
+}
+.table-thumb {
+  width: 56px;
+  height: 56px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: block;
+}
+.table-thumb :deep(img) {
+  object-fit: cover;
+  border-radius: 6px;
+}
+.no-image {
+  color: #c0c4cc;
+  font-size: 16px;
 }
 .editor-wrap {
   border: 1px solid #dcdfe6;
