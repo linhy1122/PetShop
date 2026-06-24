@@ -2,7 +2,17 @@
   <div class="product-detail-page" v-loading="loading">
     <div class="container" v-if="product">
       <div class="detail-top">
-        <img :src="product.mainImage || '/vite.svg'" class="main-image" />
+        <div class="gallery">
+          <el-image :src="currentImage" :preview-src-list="allImages"
+                    fit="cover" class="main-image" />
+          <div class="thumbnail-strip" v-if="allImages.length > 1">
+            <div v-for="(url, i) in allImages" :key="i"
+                 class="thumbnail" :class="{ active: url === currentImage }"
+                 @click="currentImage = url">
+              <img :src="url" alt="" />
+            </div>
+          </div>
+        </div>
         <div class="info">
           <h1>{{ product.name }}</h1>
           <el-tag :type="product.productType === 1 ? 'warning' : 'info'">
@@ -52,7 +62,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getProductDetailApi } from '@/api/product'
 import { addToCartApi } from '@/api/cart'
@@ -68,6 +78,24 @@ const product = ref(null)
 const reviews = ref([])
 const quantity = ref(1)
 const loading = ref(false)
+
+// 图集：合并主图 + 额外图片
+const allImages = computed(() => {
+  if (!product.value) return []
+  const list = []
+  if (product.value.mainImage) list.push(product.value.mainImage)
+  try {
+    const extras = JSON.parse(product.value.images || '[]')
+    if (Array.isArray(extras)) {
+      extras.filter(u => u).forEach(u => { if (!list.includes(u)) list.push(u) })
+    }
+  } catch { /* ignore */ }
+  return list
+})
+const currentImage = ref('')
+watch(() => product.value, (p) => {
+  if (p) currentImage.value = p.mainImage || ''
+})
 
 onMounted(async () => {
   const id = route.params.id
@@ -105,7 +133,37 @@ function buyNow() {
 <style scoped>
 .container { max-width: 1100px; margin: 0 auto; padding: 20px; }
 .detail-top { display: flex; gap: 40px; margin-bottom: 40px; }
-.main-image { width: 450px; height: 350px; object-fit: cover; border-radius: 12px; }
+.gallery { flex-shrink: 0; }
+.main-image { width: 450px; height: 350px; border-radius: 12px; overflow: hidden; }
+.main-image :deep(img) { object-fit: cover; }
+.thumbnail-strip {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+}
+.thumbnail {
+  width: 64px;
+  height: 64px;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: border-color .2s, transform .2s, box-shadow .2s;
+  flex-shrink: 0;
+}
+.thumbnail:hover {
+  transform: scale(1.08);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
+}
+.thumbnail.active {
+  border-color: #409eff;
+  box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2);
+}
+.thumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
 .info { flex: 1; }
 .info h1 { font-size: 24px; margin-bottom: 12px; }
 .price-section { margin: 20px 0; }

@@ -1,9 +1,11 @@
 package com.petshop.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.petshop.dto.ProductDto;
 import com.petshop.entity.Product;
 import com.petshop.mapper.ProductMapper;
 import com.petshop.service.ProductService;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,6 +34,46 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
             product.setStock(product.getStock() - quantity);
             product.setSales(product.getSales() + quantity);
         }
+        return updateById(product);
+    }
+
+    @Override
+    public boolean saveProduct(ProductDto dto) {
+        Product product = new Product();
+        BeanUtils.copyProperties(dto, product);
+        if (product.getStatus() == null) {
+            product.setStatus(1);
+        }
+        if (product.getStock() == null) {
+            product.setStock(0);
+        }
+        if (product.getSales() == null) {
+            product.setSales(0);
+        }
+        if (product.getImages() == null) {
+            product.setImages("[]");
+        }
+        return save(product);
+    }
+
+    @Override
+    public boolean updateProduct(Long id, ProductDto dto) {
+        Product product = new Product();
+        BeanUtils.copyProperties(dto, product);
+        product.setId(id);
+        return updateById(product);
+    }
+
+    @Override
+    public boolean deleteProduct(Long id) {
+        return removeById(id);
+    }
+
+    @Override
+    public boolean updateStatus(Long productId, Integer status) {
+        Product product = new Product();
+        product.setId(productId);
+        product.setStatus(status);
         return updateById(product);
     }
 }

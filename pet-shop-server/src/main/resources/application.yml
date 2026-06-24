@@ -70,6 +70,12 @@ github:
     client-secret: 59bf325d4173b90fc8d5f855b144cdad1d35d680
     redirect-uri: http://localhost:8080/oauth/github/callback
 
+# 自定义配置
+pet-shop:
+  upload:
+    # 文件上传目录（相对于工作目录或绝对路径）
+    path: ./uploads/
+
 # 日志
 logging:
   level:
