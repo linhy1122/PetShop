@@ -91,42 +91,50 @@ const routes = [
     component: () => import('@/views/AiChat.vue'),
     meta: { title: '智能客服' }
   },
-  // 管理员路由
+  // 管理员路由（嵌套布局）
   {
-    path: '/admin/dashboard',
-    name: 'AdminDashboard',
-    component: () => import('@/views/admin/Dashboard.vue'),
-    meta: { title: '管理后台', requireAuth: true, requireAdmin: true }
-  },
-  {
-    path: '/admin/product',
-    name: 'AdminProduct',
-    component: () => import('@/views/admin/ProductManage.vue'),
-    meta: { title: '商品管理', requireAuth: true, requireAdmin: true }
-  },
-  {
-    path: '/admin/store',
-    name: 'AdminStore',
-    component: () => import('@/views/admin/StoreManage.vue'),
-    meta: { title: '店铺管理', requireAuth: true, requireAdmin: true }
-  },
-  {
-    path: '/admin/order',
-    name: 'AdminOrder',
-    component: () => import('@/views/admin/OrderManage.vue'),
-    meta: { title: '订单管理', requireAuth: true, requireAdmin: true }
-  },
-  {
-    path: '/admin/user',
-    name: 'AdminUser',
-    component: () => import('@/views/admin/UserManage.vue'),
-    meta: { title: '用户管理', requireAuth: true, requireAdmin: true }
-  },
-  {
-    path: '/admin/video',
-    name: 'AdminVideo',
-    component: () => import('@/views/admin/VideoManage.vue'),
-    meta: { title: '视频管理', requireAuth: true, requireAdmin: true }
+    path: '/admin',
+    component: () => import('@/views/admin/AdminLayout.vue'),
+    meta: { requireAuth: true, requireAdmin: true },
+    redirect: '/admin/dashboard',
+    children: [
+      {
+        path: 'dashboard',
+        name: 'AdminDashboard',
+        component: () => import('@/views/admin/Dashboard.vue'),
+        meta: { title: '管理控制台' }
+      },
+      {
+        path: 'product',
+        name: 'AdminProduct',
+        component: () => import('@/views/admin/ProductManage.vue'),
+        meta: { title: '商品管理' }
+      },
+      {
+        path: 'store',
+        name: 'AdminStore',
+        component: () => import('@/views/admin/StoreManage.vue'),
+        meta: { title: '店铺管理' }
+      },
+      {
+        path: 'order',
+        name: 'AdminOrder',
+        component: () => import('@/views/admin/OrderManage.vue'),
+        meta: { title: '订单管理' }
+      },
+      {
+        path: 'user',
+        name: 'AdminUser',
+        component: () => import('@/views/admin/UserManage.vue'),
+        meta: { title: '用户管理' }
+      },
+      {
+        path: 'video',
+        name: 'AdminVideo',
+        component: () => import('@/views/admin/VideoManage.vue'),
+        meta: { title: '视频管理' }
+      },
+    ]
   },
 ]
 
