@@ -21,7 +21,7 @@
           <el-input v-model="input" placeholder="输入您的问题，比如：如何挑选健康的猫咪？"
                     @keyup.enter="sendMessage" :disabled="loading">
             <template #append>
-              <el-button :icon="Promotion" @click="sendMessage" :loading="loading" />
+              <el-button :icon="Position" @click="sendMessage" :loading="loading" />
             </template>
           </el-input>
         </div>
