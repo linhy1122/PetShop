@@ -39,3 +39,28 @@ export function updatePasswordApi(userId, oldPassword, newPassword) {
 export function getGithubAuthUrl() {
   return 'http://localhost:8080/oauth/github/authorize'
 }
+
+/** 管理端用户分页列表 */
+export function getAdminUserListApi(params) {
+  return request.get('/user/admin/list', { params })
+}
+
+/** 管理端用户详情 */
+export function getAdminUserDetailApi(id) {
+  return request.get(`/user/admin/${id}`)
+}
+
+/** 管理端编辑用户 */
+export function updateAdminUserApi(id, data) {
+  return request.put(`/user/admin/${id}`, data)
+}
+
+/** 管理端启用或禁用用户 */
+export function updateAdminUserStatusApi(id, status) {
+  return request.put(`/user/admin/${id}/status`, null, { params: { status } })
+}
+
+/** 管理端删除用户 */
+export function deleteAdminUserApi(id) {
+  return request.delete(`/user/admin/${id}`)
+}
