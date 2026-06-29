@@ -148,7 +148,7 @@ router.beforeEach((to, from, next) => {
   document.title = to.meta.title ? `${to.meta.title} - 宠物商店` : '宠物商店'
   const token = localStorage.getItem('token')
   if (to.meta.requireAuth && !token) {
-    next('/login')
+    next({ path: '/login', query: { redirect: to.fullPath } })
   } else {
     next()
   }

@@ -41,6 +41,10 @@
                 库存: {{ item.stock }}
               </span>
             </div>
+            <el-button type="primary" size="small" class="cart-btn"
+                       @click.stop="handleAddToCart(item)">
+              🛒 加入购物车
+            </el-button>
           </div>
         </el-card>
       </div>
@@ -59,10 +63,16 @@
 import { ref, reactive, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getProductListApi } from '@/api/product'
+import { addToCartApi } from '@/api/cart'
+import { useUserStore } from '@/stores/user'
+import { useCartStore } from '@/stores/cart'
 import request from '@/utils/request'
+import { ElMessage } from 'element-plus'
 
 const route = useRoute()
 const router = useRouter()
+const userStore = useUserStore()
+const cartStore = useCartStore()
 
 const loading = ref(false)
 const products = ref([])
@@ -105,6 +115,20 @@ function selectCategory(id) {
   query.page = 1
   fetchData()
 }
+
+async function handleAddToCart(product) {
+  if (!userStore.isLoggedIn()) {
+    router.push({ path: '/login', query: { redirect: router.currentRoute.value.fullPath } })
+    return
+  }
+  try {
+    await addToCartApi(userStore.userInfo.userId, product.id, 1)
+    cartStore.fetchCart(userStore.userInfo.userId)
+    ElMessage.success('已加入购物车')
+  } catch (e) {
+    ElMessage.error(e.response?.data?.message || '添加失败')
+  }
+}
 </script>
 
 <style scoped>
@@ -124,5 +148,6 @@ function selectCategory(id) {
 .bottom { display: flex; justify-content: space-between; align-items: center; }
 .price { color: #f56c6c; font-size: 18px; font-weight: bold; }
 .stock { color: #999; font-size: 12px; }
+.cart-btn { width: 100%; margin-top: 10px; }
 .pagination { display: flex; justify-content: center; margin-top: 30px; }
 </style>

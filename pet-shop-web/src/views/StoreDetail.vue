@@ -19,6 +19,10 @@
             <h4>{{ p.name }}</h4>
             <span class="price">¥{{ p.price }}</span>
           </div>
+          <el-button type="primary" size="small" class="cart-btn"
+                     @click.stop="handleAddToCart(p)">
+            🛒 加入购物车
+          </el-button>
         </el-card>
       </div>
     </div>
@@ -27,11 +31,19 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { getStoreDetailApi } from '@/api/store'
 import { getProductListApi } from '@/api/product'
+import { addToCartApi } from '@/api/cart'
+import { useUserStore } from '@/stores/user'
+import { useCartStore } from '@/stores/cart'
+import { ElMessage } from 'element-plus'
 
 const route = useRoute()
+const router = useRouter()
+const userStore = useUserStore()
+const cartStore = useCartStore()
+
 const store = ref(null)
 const products = ref([])
 const loading = ref(false)
@@ -44,6 +56,20 @@ onMounted(async () => {
     products.value = res.data?.records || []
   } finally { loading.value = false }
 })
+
+async function handleAddToCart(product) {
+  if (!userStore.isLoggedIn()) {
+    router.push({ path: '/login', query: { redirect: router.currentRoute.value.fullPath } })
+    return
+  }
+  try {
+    await addToCartApi(userStore.userInfo.userId, product.id, 1)
+    cartStore.fetchCart(userStore.userInfo.userId)
+    ElMessage.success('已加入购物车')
+  } catch (e) {
+    ElMessage.error(e.response?.data?.message || '添加失败')
+  }
+}
 </script>
 
 <style scoped>
@@ -57,4 +83,5 @@ p { line-height: 2; color: #666; }
 .product-info { padding: 8px 0; display: flex; justify-content: space-between; align-items: center; }
 .product-info h4 { font-size: 14px; }
 .price { color: #f56c6c; font-weight: bold; }
+.cart-btn { width: 100%; margin-top: 10px; }
 </style>

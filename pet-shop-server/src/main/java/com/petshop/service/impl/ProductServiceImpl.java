@@ -26,8 +26,11 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
         if (product.getProductType() == 2 && product.getStock() < quantity) {
             throw new RuntimeException("库存不足");
         }
-        // 宠物类型：购买后直接下架
+        // 宠物类型：购买后直接下架，需检查是否已被他人购买
         if (product.getProductType() == 1) {
+            if (product.getStatus() == 0 || product.getStock() == 0) {
+                throw new RuntimeException("该宠物已被其他用户购买");
+            }
             product.setStatus(0);
             product.setStock(0);
         } else {

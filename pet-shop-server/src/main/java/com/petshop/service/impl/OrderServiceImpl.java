@@ -42,7 +42,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
     @Transactional
     public Order createOrder(Long userId, Long addressId, String remark) {
         // 获取购物车中选中的商品
-        List<Cart> cartItems = cartService.getUserCart(userId);
+        List<Cart> cartItems = cartService.getCartEntities(userId);
         List<Cart> checkedItems = cartItems.stream()
                 .filter(c -> c.getChecked() == 1)
                 .toList();
@@ -51,12 +51,16 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             throw new RuntimeException("购物车中没有选中的商品");
         }
 
-        // 计算总金额
+        // 计算总金额 + 校验商品可购买
         BigDecimal totalAmount = BigDecimal.ZERO;
         for (Cart cart : checkedItems) {
             Product product = productService.getById(cart.getProductId());
             if (product == null || product.getStatus() == 0) {
                 throw new RuntimeException("商品已下架：" + cart.getProductId());
+            }
+            // 宠物类商品唯一性校验
+            if (product.getProductType() == 1 && product.getStock() == 0) {
+                throw new RuntimeException("该宠物已被其他用户购买：" + product.getName());
             }
             totalAmount = totalAmount.add(product.getPrice().multiply(BigDecimal.valueOf(cart.getQuantity())));
         }
@@ -116,7 +120,22 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         String cancelMsg = isAutoCancel ? "超时未支付自动取消" : reason;
         order.setCancelReason(cancelMsg);
         updateById(order);
-        // TODO: 恢复库存
+
+        // 恢复库存
+        List<OrderItem> items = orderItemService.getByOrderId(orderId);
+        for (OrderItem item : items) {
+            Product product = productService.getById(item.getProductId());
+            if (product != null) {
+                if (product.getProductType() == 1) {
+                    // 宠物商品：恢复上架
+                    product.setStatus(1);
+                    product.setStock(1);
+                } else {
+                    product.setStock(product.getStock() + item.getQuantity());
+                }
+                productService.updateById(product);
+            }
+        }
     }
 
     @Override

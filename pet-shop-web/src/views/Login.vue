@@ -56,12 +56,13 @@
 
 <script setup>
 import { reactive, ref, onMounted, onUnmounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { getCaptchaApi, verifyCaptchaApi } from '@/api/user'
 import { ElMessage } from 'element-plus'
 
 const router = useRouter()
+const route = useRoute()
 const userStore = useUserStore()
 const formRef = ref(null)
 const loading = ref(false)
@@ -173,7 +174,8 @@ async function handleLogin() {
   try {
     await userStore.login(form.username, form.password, captchaKey.value, captchaX.value)
     ElMessage.success('登录成功')
-    router.push('/')
+    const redirect = route.query.redirect
+    router.push(redirect || '/')
   } catch (e) {
     ElMessage.error(e.message || '登录失败')
     refreshCaptcha()
