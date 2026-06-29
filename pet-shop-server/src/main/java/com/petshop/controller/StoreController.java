@@ -26,11 +26,19 @@ public class StoreController {
     @GetMapping("/list")
     public Result<Page<Store>> list(@RequestParam(defaultValue = "1") Integer page,
                                      @RequestParam(defaultValue = "10") Integer size,
+                                     @RequestParam(required = false) String keyword,
                                      @RequestParam(required = false) String city) {
         LambdaQueryWrapper<Store> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(Store::getStatus, 0);
+        if (keyword != null && !keyword.isEmpty()) {
+            wrapper.and(w -> w
+                .like(Store::getName, keyword)
+                .or()
+                .like(Store::getCity, keyword)
+            );
+        }
         if (city != null && !city.isEmpty()) {
-            wrapper.eq(Store::getCity, city);
+            wrapper.like(Store::getCity, city);
         }
         Page<Store> result = storeService.page(new Page<>(page, size), wrapper);
         return Result.ok(result);

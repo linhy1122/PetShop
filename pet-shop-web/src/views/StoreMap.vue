@@ -3,8 +3,8 @@
     <div class="container">
       <div class="map-header">
         <h2>附近宠物商店</h2>
-        <el-input v-model="searchCity" placeholder="输入城市名搜索" style="width: 200px"
-                  prefix-icon="Search" @change="fetchStores" />
+        <el-input v-model="searchKeyword" placeholder="搜索店铺名称或城市" style="width: 240px" clearable
+                  prefix-icon="Search" @change="fetchStores" @clear="fetchStores" />
       </div>
       <div class="map-content">
         <!-- 店铺列表 -->
@@ -48,7 +48,7 @@ import { ElMessage } from 'element-plus'
 
 const stores = ref([])
 const selectedStore = ref(null)
-const searchCity = ref('')
+const searchKeyword = ref('')
 let map = null
 const markers = []
 
@@ -102,7 +102,7 @@ function initMap() {
 
 async function fetchStores() {
   try {
-    const res = await getStoreListApi({ city: searchCity.value || undefined, size: 50 })
+    const res = await getStoreListApi({ keyword: searchKeyword.value || undefined, size: 50 })
     stores.value = res.data?.records || []
   } catch (e) { ElMessage.warning('加载店铺失败') }
 }
