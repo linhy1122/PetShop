@@ -45,6 +45,10 @@
               <span class="price">¥{{ item.price }}</span>
               <span class="sales">已售 {{ item.sales }}</span>
             </div>
+            <el-button type="primary" size="small" class="cart-btn"
+                       @click.stop="handleAddToCart(item)">
+              🛒 加入购物车
+            </el-button>
           </div>
         </el-card>
       </div>
@@ -54,8 +58,16 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { getHotProductsApi } from '@/api/product'
+import { addToCartApi } from '@/api/cart'
+import { useUserStore } from '@/stores/user'
+import { useCartStore } from '@/stores/cart'
 import { ElMessage } from 'element-plus'
+
+const router = useRouter()
+const userStore = useUserStore()
+const cartStore = useCartStore()
 
 const hotProducts = ref([])
 const carouselImages = ref([
@@ -82,6 +94,20 @@ onMounted(async () => {
     ElMessage.warning('加载热门商品失败')
   }
 })
+
+async function handleAddToCart(product) {
+  if (!userStore.isLoggedIn()) {
+    router.push({ path: '/login', query: { redirect: router.currentRoute.value.fullPath } })
+    return
+  }
+  try {
+    await addToCartApi(userStore.userInfo.userId, product.id, 1)
+    cartStore.fetchCart(userStore.userInfo.userId)
+    ElMessage.success('已加入购物车')
+  } catch (e) {
+    ElMessage.error(e.response?.data?.message || '添加失败')
+  }
+}
 </script>
 
 <style scoped>
@@ -133,4 +159,5 @@ onMounted(async () => {
 .product-bottom { display: flex; justify-content: space-between; align-items: center; }
 .price { color: #f56c6c; font-size: 18px; font-weight: bold; }
 .sales { color: #999; font-size: 12px; }
+.cart-btn { width: 100%; margin-top: 10px; }
 </style>

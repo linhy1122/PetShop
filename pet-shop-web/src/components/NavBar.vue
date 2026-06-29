@@ -51,7 +51,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { useCartStore } from '@/stores/cart'
@@ -61,6 +61,12 @@ const userStore = useUserStore()
 const cartStore = useCartStore()
 
 const activeIndex = computed(() => route.path)
+
+onMounted(() => {
+  if (userStore.isLoggedIn()) {
+    cartStore.fetchCart(userStore.userInfo.userId)
+  }
+})
 
 function handleLogout() {
   userStore.logout()

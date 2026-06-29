@@ -7,30 +7,50 @@
       </el-empty>
 
       <template v-else>
-        <el-card v-for="item in cartItems" :key="item.id" class="cart-item">
+        <el-card v-for="item in cartItems" :key="item.id"
+                 class="cart-item" :class="{ offline: item.productStatus === 0 }">
           <div class="item-row">
             <el-checkbox v-model="item.checked" :true-value="1" :false-value="0"
+                         :disabled="item.productStatus === 0"
                          @change="handleCheck(item)" />
             <img :src="item.productImage || '/vite.svg'" class="item-img" />
             <div class="item-info">
-              <h4>{{ item.productName }}</h4>
+              <h4>
+                {{ item.productName }}
+                <el-tag v-if="item.productStatus === 0" type="danger" size="small">已下架</el-tag>
+                <el-tag v-else-if="item.productType === 1" type="warning" size="small">宠物</el-tag>
+              </h4>
               <p class="item-price">¥{{ item.price }}</p>
+              <p v-if="item.productType === 2 && item.quantity > item.stock"
+                 class="stock-warn">⚠ 库存不足（剩余 {{ item.stock }}）</p>
             </div>
-            <el-input-number v-model="item.quantity" :min="1" size="small"
+            <el-input-number v-model="item.quantity" :min="1"
+                             :max="item.productType === 1 ? 1 : item.stock"
+                             size="small"
                              @change="handleQuantity(item)" />
             <span class="item-subtotal">¥{{ (item.price * item.quantity).toFixed(2) }}</span>
-            <el-button type="danger" size="small" circle :icon="Delete"
-                       @click="handleRemove(item)" />
+            <el-button type="danger" size="small" :icon="Delete"
+                       @click="handleRemove(item)">删除</el-button>
           </div>
         </el-card>
 
         <div class="cart-footer">
-          <el-checkbox v-model="allChecked" @change="handleCheckAll">全选</el-checkbox>
-          <div class="total">
-            合计：<span class="total-price">¥{{ totalPrice }}</span>
+          <div class="footer-left">
+            <el-checkbox v-model="allChecked" @change="handleCheckAll">全选</el-checkbox>
+            <el-button type="danger" plain size="small"
+                       :disabled="checkedCount === 0"
+                       @click="handleBatchRemove">删除选中</el-button>
+            <el-button type="warning" plain size="small"
+                       :disabled="offlineCount === 0"
+                       @click="handleClearOffline">清除已下架</el-button>
           </div>
-          <el-button type="primary" size="large" :disabled="totalPrice === 0"
-                     @click="handleCheckout">去结算</el-button>
+          <div class="footer-right">
+            <div class="total">
+              合计：<span class="total-price">¥{{ totalPrice }}</span>
+            </div>
+            <el-button type="primary" size="large" :disabled="totalPrice === 0"
+                       @click="handleCheckout">去结算</el-button>
+          </div>
         </div>
       </template>
 
@@ -65,7 +85,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { useCartStore } from '@/stores/cart'
-import { getCartApi, updateCartCheckApi, updateCartQuantityApi, removeCartItemApi } from '@/api/cart'
+import { getCartApi, updateCartCheckApi, updateCartQuantityApi, removeCartItemApi, batchRemoveCartApi, clearOfflineCartApi } from '@/api/cart'
 import { createOrderApi } from '@/api/order'
 import request from '@/utils/request'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -88,10 +108,18 @@ const allChecked = computed({
 
 const totalPrice = computed(() => {
   return cartItems.value
-    .filter(i => i.checked === 1)
+    .filter(i => i.checked === 1 && i.productStatus !== 0)
     .reduce((sum, i) => sum + i.price * i.quantity, 0)
     .toFixed(2)
 })
+
+const checkedCount = computed(() =>
+  cartItems.value.filter(i => i.checked === 1).length
+)
+
+const offlineCount = computed(() =>
+  cartItems.value.filter(i => i.productStatus === 0).length
+)
 
 onMounted(async () => {
   if (!userStore.isLoggedIn()) {
@@ -118,24 +146,64 @@ async function loadAddresses() {
 }
 
 async function handleQuantity(item) {
-  await updateCartQuantityApi(item.id, item.quantity)
+  try {
+    await updateCartQuantityApi(item.id, item.quantity)
+  } catch (e) {
+    ElMessage.error(e.response?.data?.message || '修改失败')
+    await loadCart()
+  }
 }
 
 async function handleCheck(item) {
   await updateCartCheckApi(item.id, item.checked)
+  cartStore.fetchCart(userStore.userInfo.userId)
 }
 
 async function handleCheckAll(val) {
-  const promises = cartItems.value.map(i => updateCartCheckApi(i.id, val ? 1 : 0))
+  const promises = cartItems.value
+    .filter(i => i.productStatus !== 0)
+    .map(i => updateCartCheckApi(i.id, val ? 1 : 0))
   await Promise.all(promises)
+  cartStore.fetchCart(userStore.userInfo.userId)
+  await loadCart()
 }
 
 async function handleRemove(item) {
-  await ElMessageBox.confirm('确定要移除该商品吗？', '提示', { type: 'warning' })
+  await ElMessageBox.confirm(
+    `确定要删除「${item.productName}」吗？`,
+    '删除商品',
+    { type: 'warning', confirmButtonText: '删除', cancelButtonText: '取消' }
+  )
   await removeCartItemApi(item.id)
   await loadCart()
   cartStore.fetchCart(userStore.userInfo.userId)
-  ElMessage.success('已移除')
+  ElMessage.success('已删除')
+}
+
+async function handleBatchRemove() {
+  const ids = cartItems.value.filter(i => i.checked === 1).map(i => i.id)
+  if (ids.length === 0) return
+  await ElMessageBox.confirm(
+    `确定要删除选中的 ${ids.length} 件商品吗？`,
+    '批量删除',
+    { type: 'warning', confirmButtonText: '删除', cancelButtonText: '取消' }
+  )
+  await batchRemoveCartApi(ids)
+  await loadCart()
+  cartStore.fetchCart(userStore.userInfo.userId)
+  ElMessage.success(`已删除 ${ids.length} 件商品`)
+}
+
+async function handleClearOffline() {
+  await ElMessageBox.confirm(
+    '确定要清除所有已下架的商品吗？',
+    '清除已下架',
+    { type: 'warning', confirmButtonText: '清除', cancelButtonText: '取消' }
+  )
+  await clearOfflineCartApi(userStore.userInfo.userId)
+  await loadCart()
+  cartStore.fetchCart(userStore.userInfo.userId)
+  ElMessage.success('已清除下架商品')
 }
 
 function handleCheckout() {
@@ -168,12 +236,17 @@ h2 { margin-bottom: 20px; }
 .item-row { display: flex; align-items: center; gap: 16px; }
 .item-img { width: 80px; height: 80px; object-fit: cover; border-radius: 8px; }
 .item-info { flex: 1; }
-.item-info h4 { font-size: 15px; margin-bottom: 4px; }
+.item-info h4 { font-size: 15px; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
 .item-price { color: #f56c6c; font-weight: bold; }
+.stock-warn { color: #e6a23c; font-size: 12px; }
+.cart-item.offline { opacity: 0.6; background: #f5f5f5; }
 .item-subtotal { font-weight: bold; min-width: 80px; text-align: right; }
 .cart-footer {
   display: flex; align-items: center; justify-content: space-between;
   padding: 20px; background: #fff; border-radius: 12px; margin-top: 20px;
+  flex-wrap: wrap; gap: 12px;
 }
+.footer-left { display: flex; align-items: center; gap: 12px; }
+.footer-right { display: flex; align-items: center; gap: 16px; }
 .total-price { font-size: 24px; color: #f56c6c; font-weight: bold; }
 </style>

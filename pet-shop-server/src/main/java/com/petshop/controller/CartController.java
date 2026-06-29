@@ -1,7 +1,7 @@
 package com.petshop.controller;
 
 import com.petshop.common.Result;
-import com.petshop.entity.Cart;
+import com.petshop.dto.CartItemDto;
 import com.petshop.service.CartService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -18,9 +18,9 @@ public class CartController {
     @Autowired
     private CartService cartService;
 
-    /** 获取用户购物车 */
+    /** 获取用户购物车（含商品详情） */
     @GetMapping("/list")
-    public Result<List<Cart>> list(@RequestParam Long userId) {
+    public Result<List<CartItemDto>> list(@RequestParam Long userId) {
         return Result.ok(cartService.getUserCart(userId));
     }
 
@@ -53,6 +53,20 @@ public class CartController {
     @DeleteMapping("/{cartId}")
     public Result<?> remove(@PathVariable Long cartId) {
         cartService.removeById(cartId);
+        return Result.ok();
+    }
+
+    /** 批量删除购物车项 */
+    @DeleteMapping("/batch")
+    public Result<?> batchRemove(@RequestParam List<Long> ids) {
+        cartService.removeByIds(ids);
+        return Result.ok();
+    }
+
+    /** 清除用户购物车中已下架的商品 */
+    @DeleteMapping("/clear-offline")
+    public Result<?> clearOffline(@RequestParam Long userId) {
+        cartService.clearOffline(userId);
         return Result.ok();
     }
 }
