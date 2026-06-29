@@ -43,6 +43,22 @@ public class Order extends BaseEntity {
     private String remark;
     /** 取消/退单原因 */
     private String cancelReason;
+    /** 取消类型：USER-用户, SYSTEM-系统, ADMIN-管理员 */
+    private String cancelType;
+    /** 退款原因 */
+    private String refundReason;
+    /** 退款说明 */
+    private String refundRemark;
+    /** 退款金额 */
+    private BigDecimal refundMoney;
+    /** 退款时间 */
+    private LocalDateTime refundTime;
+    /** 审核意见 */
+    private String auditRemark;
+    /** 退单前的原状态（审核拒绝后恢复用） */
+    private Integer previousStatus;
+    /** 评价时间 */
+    private LocalDateTime commentTime;
     /** 物流公司 */
     private String logisticsCompany;
     /** 物流单号 */

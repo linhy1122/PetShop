@@ -2,6 +2,9 @@ package com.petshop.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.petshop.entity.Order;
+import com.petshop.entity.OrderLog;
+
+import java.util.List;
 
 /**
  * 订单服务
@@ -15,7 +18,7 @@ public interface OrderService extends IService<Order> {
     void payOrder(Long orderId, String payMethod);
 
     /** 取消订单 */
-    void cancelOrder(Long orderId, String reason, boolean isAutoCancel);
+    void cancelOrder(Long orderId, String reason, String cancelType, boolean isAutoCancel);
 
     /** 发货 */
     void deliverOrder(Long orderId, String logisticsCompany, String logisticsNo);
@@ -27,8 +30,11 @@ public interface OrderService extends IService<Order> {
     void applyRefund(Long orderId, String reason);
 
     /** 审核退单 */
-    void auditRefund(Long orderId, boolean approved);
+    void auditRefund(Long orderId, boolean approved, String auditRemark);
 
     /** 管理员直接退单 */
     void adminRefund(Long orderId, String reason);
+
+    /** 获取订单操作日志 */
+    List<OrderLog> getOrderLogs(Long orderId);
 }
