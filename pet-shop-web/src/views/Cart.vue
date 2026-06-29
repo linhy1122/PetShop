@@ -29,8 +29,8 @@
                              size="small"
                              @change="handleQuantity(item)" />
             <span class="item-subtotal">¥{{ (item.price * item.quantity).toFixed(2) }}</span>
-            <el-button type="danger" size="small" circle :icon="Delete"
-                       @click="handleRemove(item)" />
+            <el-button type="danger" size="small" :icon="Delete"
+                       @click="handleRemove(item)">删除</el-button>
           </div>
         </el-card>
 
@@ -169,17 +169,25 @@ async function handleCheckAll(val) {
 }
 
 async function handleRemove(item) {
-  await ElMessageBox.confirm('确定要移除该商品吗？', '提示', { type: 'warning' })
+  await ElMessageBox.confirm(
+    `确定要删除「${item.productName}」吗？`,
+    '删除商品',
+    { type: 'warning', confirmButtonText: '删除', cancelButtonText: '取消' }
+  )
   await removeCartItemApi(item.id)
   await loadCart()
   cartStore.fetchCart(userStore.userInfo.userId)
-  ElMessage.success('已移除')
+  ElMessage.success('已删除')
 }
 
 async function handleBatchRemove() {
   const ids = cartItems.value.filter(i => i.checked === 1).map(i => i.id)
   if (ids.length === 0) return
-  await ElMessageBox.confirm(`确定要删除选中的 ${ids.length} 件商品吗？`, '批量删除', { type: 'warning' })
+  await ElMessageBox.confirm(
+    `确定要删除选中的 ${ids.length} 件商品吗？`,
+    '批量删除',
+    { type: 'warning', confirmButtonText: '删除', cancelButtonText: '取消' }
+  )
   await batchRemoveCartApi(ids)
   await loadCart()
   cartStore.fetchCart(userStore.userInfo.userId)
@@ -187,7 +195,11 @@ async function handleBatchRemove() {
 }
 
 async function handleClearOffline() {
-  await ElMessageBox.confirm('确定要清除所有已下架的商品吗？', '清除已下架', { type: 'warning' })
+  await ElMessageBox.confirm(
+    '确定要清除所有已下架的商品吗？',
+    '清除已下架',
+    { type: 'warning', confirmButtonText: '清除', cancelButtonText: '取消' }
+  )
   await clearOfflineCartApi(userStore.userInfo.userId)
   await loadCart()
   cartStore.fetchCart(userStore.userInfo.userId)
