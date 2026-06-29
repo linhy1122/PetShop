@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS t_user (
     deleted     TINYINT         DEFAULT 0                   COMMENT '逻辑删除：0-否, 1-是'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户表';
 
-CREATE UNIQUE INDEX IF NOT EXISTS idx_github_id ON t_user (github_id);
+CREATE UNIQUE INDEX idx_github_id ON t_user (github_id);
 
 -- ==================== 收货地址表 ====================
 CREATE TABLE IF NOT EXISTS t_address (

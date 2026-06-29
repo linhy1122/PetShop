@@ -1,7 +1,10 @@
 package com.petshop.service;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.petshop.dto.UserAdminDto;
 import com.petshop.entity.User;
+import com.petshop.vo.UserAdminVO;
 
 /**
  * 用户服务
@@ -28,4 +31,21 @@ public interface UserService extends IService<User> {
 
     /** GitHub OAuth登录（自动注册），返回 token + 用户信息 */
     java.util.Map<String, Object> loginByGithub(Long githubId, String githubUsername, String avatarUrl, String email);
+
+    /** 管理端分页查询用户 */
+    Page<UserAdminVO> pageAdminUsers(Integer page, Integer size, String username,
+                                     String nickname, String phone, Integer status,
+                                     String role, Integer memberLevel);
+
+    /** 管理端查询用户详情 */
+    UserAdminVO getAdminUser(Long id);
+
+    /** 管理端编辑用户基本信息 */
+    void updateAdminUser(Long id, UserAdminDto dto);
+
+    /** 管理端启用或禁用普通用户 */
+    void updateAdminUserStatus(Long id, Integer status);
+
+    /** 管理端删除无历史订单的普通用户 */
+    void deleteAdminUser(Long id);
 }
