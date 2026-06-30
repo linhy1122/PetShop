@@ -19,7 +19,9 @@
 
     <!-- 表格 -->
     <el-table :data="tableData" style="margin-top: 16px" v-loading="loading">
-      <el-table-column prop="id" label="ID" width="60" />
+      <el-table-column label="序号" width="70" align="center">
+        <template #default="{ $index }">{{ getProductRowIndex($index) }}</template>
+      </el-table-column>
       <el-table-column label="主图" width="80" align="center">
         <template #default="{ row }">
           <el-image v-if="row.mainImage" :src="row.mainImage"
@@ -292,6 +294,10 @@ function onPageChange() {
 
 function getCategoryName(id) {
   return categories.value.find(c => c.id === id)?.name || ''
+}
+
+function getProductRowIndex(index) {
+  return (page.current - 1) * page.size + index + 1
 }
 
 // ==================== 分类联动 ====================

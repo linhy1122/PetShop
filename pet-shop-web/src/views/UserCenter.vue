@@ -42,15 +42,16 @@
 
         <el-tab-pane label="收货地址">
           <el-button type="primary" size="small" @click="showAddrDialog(null)">新增地址</el-button>
-          <div style="margin-top: 16px">
+          <div class="addr-list">
             <el-card v-for="addr in addresses" :key="addr.id" class="addr-card">
-              <div class="addr-info">
-                <div>
-                  <strong>{{ addr.receiverName }}</strong> {{ addr.receiverPhone }}
+              <div class="address-header">
+                <strong class="address-name">{{ addr.receiverName }}</strong>
+                <span class="address-phone">{{ addr.receiverPhone }}</span>
+                <span class="address-default">
                   <el-tag v-if="addr.isDefault === 1" size="small" type="success">默认</el-tag>
-                </div>
-                <p>{{ addr.province }}{{ addr.city }}{{ addr.district }} {{ addr.detail }}</p>
+                </span>
               </div>
+              <p class="address-detail">{{ addr.province }} {{ addr.city }} {{ addr.district }} {{ addr.detail }}</p>
               <div class="addr-actions">
                 <el-button size="small" @click="showAddrDialog(addr)">编辑</el-button>
                 <el-button v-if="addr.isDefault !== 1" size="small"
@@ -67,9 +68,14 @@
         <el-form :model="addrForm" label-width="80px">
           <el-form-item label="收货人"><el-input v-model="addrForm.receiverName" /></el-form-item>
           <el-form-item label="手机号"><el-input v-model="addrForm.receiverPhone" /></el-form-item>
-          <el-form-item label="省份"><el-input v-model="addrForm.province" /></el-form-item>
-          <el-form-item label="城市"><el-input v-model="addrForm.city" /></el-form-item>
-          <el-form-item label="区/县"><el-input v-model="addrForm.district" /></el-form-item>
+          <el-form-item label="所在地区">
+            <el-cascader
+              v-model="areaValue"
+              :options="regionData"
+              placeholder="请选择省 / 市 / 区县"
+              style="width: 100%"
+            />
+          </el-form-item>
           <el-form-item label="详细地址"><el-input v-model="addrForm.detail" type="textarea" /></el-form-item>
         </el-form>
         <template #footer>
@@ -87,11 +93,13 @@ import { useUserStore } from '@/stores/user'
 import { updateProfileApi, updatePasswordApi } from '@/api/user'
 import request from '@/utils/request'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { regionData } from '@/utils/regionData'
 
 const userStore = useUserStore()
 const addresses = ref([])
 const addrDialog = ref(false)
 const editingAddr = ref(null)
+const areaValue = ref([])
 
 const userForm = reactive({ nickname: '', phone: '', email: '' })
 const pwdForm = reactive({ oldPassword: '', newPassword: '', confirmPassword: '' })
@@ -136,14 +144,24 @@ function showAddrDialog(addr) {
   editingAddr.value = addr
   if (addr) {
     Object.assign(addrForm, addr)
+    areaValue.value = addr.province && addr.city && addr.district
+      ? [addr.province, addr.city, addr.district]
+      : []
   } else {
     Object.assign(addrForm, { receiverName: '', receiverPhone: '', province: '', city: '', district: '', detail: '' })
+    areaValue.value = []
   }
   addrDialog.value = true
 }
 
 async function saveAddr() {
   try {
+    if (!validateAddrForm()) return
+
+    const [province, city, district] = areaValue.value
+    addrForm.province = province
+    addrForm.city = city
+    addrForm.district = district
     addrForm.userId = userStore.userInfo.userId
     if (editingAddr.value?.id) {
       addrForm.id = editingAddr.value.id
@@ -155,6 +173,30 @@ async function saveAddr() {
     addrDialog.value = false
     await loadAddresses()
   } catch (e) { ElMessage.error(e.message) }
+}
+
+function validateAddrForm() {
+  if (!addrForm.receiverName?.trim()) {
+    ElMessage.error('收货人不能为空')
+    return false
+  }
+  if (!addrForm.receiverPhone?.trim()) {
+    ElMessage.error('手机号不能为空')
+    return false
+  }
+  if (!/^1[3-9]\d{9}$/.test(addrForm.receiverPhone.trim())) {
+    ElMessage.error('请输入正确的11位手机号')
+    return false
+  }
+  if (!Array.isArray(areaValue.value) || areaValue.value.length !== 3) {
+    ElMessage.error('请选择完整的省 / 市 / 区县')
+    return false
+  }
+  if (!addrForm.detail?.trim()) {
+    ElMessage.error('详细地址不能为空')
+    return false
+  }
+  return true
 }
 
 async function setDefault(addr) {
@@ -174,7 +216,17 @@ async function deleteAddr(id) {
 <style scoped>
 .container { max-width: 900px; margin: 0 auto; padding: 20px; }
 h2 { margin-bottom: 20px; }
-.addr-card { margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
-.addr-info p { margin-top: 6px; color: #666; }
-.addr-actions { display: flex; gap: 8px; }
+.addr-list { margin-top: 16px; display: flex; flex-direction: column; gap: 14px; }
+.addr-card { border: 1px solid #ebeef5; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04); }
+.addr-card :deep(.el-card__body) { padding: 24px 32px; text-align: left; }
+.address-header { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 14px; line-height: 1.4; }
+.address-name { color: #303133; font-weight: 700; }
+.address-phone { color: #303133; font-weight: 400; }
+.address-default { display: inline-flex; align-items: center; }
+.address-detail { margin: 12px 0 0; color: #606266; line-height: 1.7; word-break: break-word; }
+.addr-actions { display: flex; justify-content: flex-start; flex-wrap: wrap; gap: 8px 10px; margin-top: 18px; }
+.addr-actions :deep(.el-button + .el-button) { margin-left: 0; }
+@media (max-width: 600px) {
+  .addr-card :deep(.el-card__body) { padding: 18px 20px; }
+}
 </style>
