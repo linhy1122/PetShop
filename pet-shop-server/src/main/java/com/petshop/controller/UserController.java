@@ -103,6 +103,13 @@ public class UserController {
         return Result.ok("用户状态修改成功", null);
     }
 
+    /** 管理端新建管理员账号 */
+    @PostMapping("/admin/create")
+    public Result<?> adminCreate(@RequestBody User user) {
+        userService.adminCreateUser(user);
+        return Result.ok("创建成功", null);
+    }
+
     /** 管理端删除无历史订单的普通用户 */
     @DeleteMapping("/admin/{id}")
     public Result<?> adminDelete(@PathVariable Long id) {

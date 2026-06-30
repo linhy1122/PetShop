@@ -259,6 +259,34 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     @Override
     @Transactional
+    public void adminCreateUser(User user) {
+        if (StrUtil.isBlank(user.getUsername()) || StrUtil.isBlank(user.getPassword())) {
+            throw new RuntimeException("用户名和密码不能为空");
+        }
+        User exist = findByUsername(user.getUsername());
+        if (exist != null) {
+            throw new RuntimeException("用户名已存在");
+        }
+
+        user.setRole("admin");
+        user.setPassword(BCrypt.hashpw(user.getPassword()));
+        user.setMemberLevel(user.getMemberLevel() != null ? user.getMemberLevel() : 0);
+        user.setStatus(0);
+        if (StrUtil.isBlank(user.getNickname())) {
+            user.setNickname(user.getUsername());
+        }
+        if (StrUtil.isBlank(user.getPhone())) {
+            user.setPhone("");
+        }
+        if (StrUtil.isBlank(user.getEmail())) {
+            user.setEmail("");
+        }
+
+        save(user);
+    }
+
+    @Override
+    @Transactional
     public void deleteAdminUser(Long id) {
         User user = getExistingUser(id);
         if ("admin".equals(user.getRole())) {

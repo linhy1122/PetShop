@@ -47,6 +47,7 @@
       </el-select>
       <el-button type="primary" @click="handleSearch">搜索</el-button>
       <el-button @click="handleReset">重置</el-button>
+      <el-button type="success" @click="openCreateDialog">新建管理员</el-button>
     </div>
 
     <el-table
@@ -228,6 +229,37 @@
         </el-button>
       </template>
     </el-dialog>
+
+    <el-dialog
+      v-model="createDialogVisible"
+      title="新建管理员"
+      width="500px"
+      destroy-on-close
+      @closed="resetCreateForm"
+    >
+      <el-form ref="createFormRef" :model="createForm" :rules="createFormRules" label-width="80px">
+        <el-form-item label="用户名" prop="username">
+          <el-input v-model="createForm.username" maxlength="50" placeholder="请输入用户名" />
+        </el-form-item>
+        <el-form-item label="密码" prop="password">
+          <el-input v-model="createForm.password" type="password" show-password
+                    maxlength="100" placeholder="请输入密码" />
+        </el-form-item>
+        <el-form-item label="昵称">
+          <el-input v-model="createForm.nickname" maxlength="50" placeholder="选填，默认同用户名" />
+        </el-form-item>
+        <el-form-item label="手机号">
+          <el-input v-model="createForm.phone" maxlength="11" placeholder="选填" />
+        </el-form-item>
+        <el-form-item label="邮箱">
+          <el-input v-model="createForm.email" maxlength="100" placeholder="选填" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="createDialogVisible = false">取消</el-button>
+        <el-button type="primary" :loading="creating" @click="handleCreate">确认创建</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -235,6 +267,7 @@
 import { onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
+  adminCreateUserApi,
   deleteAdminUserApi,
   getAdminUserDetailApi,
   getAdminUserListApi,
@@ -257,6 +290,17 @@ const submitting = ref(false)
 const editingId = ref(null)
 const statusChangingId = ref(null)
 const formRef = ref(null)
+const createFormRef = ref(null)
+
+const createDialogVisible = ref(false)
+const creating = ref(false)
+const createForm = reactive({
+  username: '',
+  password: '',
+  nickname: '',
+  phone: '',
+  email: ''
+})
 
 const filters = reactive({
   username: '',
@@ -335,6 +379,11 @@ const formRules = {
     { required: true, message: '请选择用户状态', trigger: 'change' },
     { validator: validateStatus, trigger: 'change' }
   ]
+}
+
+const createFormRules = {
+  username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
+  password: [{ required: true, message: '请输入密码', trigger: 'blur' }]
 }
 
 onMounted(fetchUserList)
@@ -476,6 +525,41 @@ async function handleDelete(row) {
     await fetchUserList()
   } catch (_error) {
     // 管理员保护和订单关联提示由公共响应拦截器统一展示。
+  }
+}
+
+function openCreateDialog() {
+  resetCreateForm()
+  createDialogVisible.value = true
+}
+
+function resetCreateForm() {
+  Object.assign(createForm, {
+    username: '', password: '', nickname: '', phone: '', email: ''
+  })
+  createFormRef.value?.clearValidate()
+}
+
+async function handleCreate() {
+  const valid = await createFormRef.value?.validate().catch(() => false)
+  if (!valid) return
+
+  creating.value = true
+  try {
+    await adminCreateUserApi({
+      username: createForm.username.trim(),
+      password: createForm.password,
+      nickname: createForm.nickname.trim(),
+      phone: createForm.phone.trim(),
+      email: createForm.email.trim()
+    })
+    ElMessage.success('管理员创建成功')
+    createDialogVisible.value = false
+    await fetchUserList()
+  } catch (_error) {
+    // 错误由公共响应拦截器统一展示
+  } finally {
+    creating.value = false
   }
 }
 

@@ -48,4 +48,7 @@ public interface UserService extends IService<User> {
 
     /** 管理端删除无历史订单的普通用户 */
     void deleteAdminUser(Long id);
+
+    /** 管理端新建管理员账号 */
+    void adminCreateUser(User user);
 }

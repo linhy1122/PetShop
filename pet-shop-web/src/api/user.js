@@ -60,6 +60,11 @@ export function updateAdminUserStatusApi(id, status) {
   return request.put(`/user/admin/${id}/status`, null, { params: { status } })
 }
 
+/** 管理端新建管理员 */
+export function adminCreateUserApi(data) {
+  return request.post('/user/admin/create', data)
+}
+
 /** 管理端删除用户 */
 export function deleteAdminUserApi(id) {
   return request.delete(`/user/admin/${id}`)
