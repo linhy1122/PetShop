@@ -95,8 +95,8 @@ onMounted(async () => {
   try {
     const res = await getHotProductsApi(8)
     const products = res.data || []
-    await uni.preloadProductImages(products)
     hotProducts.value = products
+    uni.preloadProductImages(products)
   } catch (e) {
     uni.showToast({ title: '加载热门商品失败', icon: 'none' })
     hotProducts.value = []

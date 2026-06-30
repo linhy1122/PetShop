@@ -137,8 +137,8 @@ async function fetchData() {
   loading.value = true
   try {
     const data = (await getProductDetailApi(productId)).data
-    await uni.preloadProductImages(data)
     product.value = data
+    uni.preloadProductImages(data)
     try {
       const res = await request.get(`/review/product/${productId}`, { params: { size: 10 } })
       reviews.value = res.data?.records || []

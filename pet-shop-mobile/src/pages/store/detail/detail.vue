@@ -58,12 +58,12 @@ async function fetchData(id) {
   loading.value = true
   try {
     const storeData = (await getStoreDetailApi(id)).data
-    await uni.preloadStoreImages(storeData)
     store.value = storeData
+    uni.preloadStoreImages(storeData)
     const res = await getProductListApi({ storeId: id, size: 20 })
     const list = res.data?.records || []
-    await uni.preloadProductImages(list)
     products.value = list
+    uni.preloadProductImages(list)
   } catch (e) {
     uni.showToast({ title: '加载店铺失败', icon: 'none' })
     store.value = null

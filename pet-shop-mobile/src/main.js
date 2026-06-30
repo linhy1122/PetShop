@@ -22,22 +22,10 @@ function downloadImage(url) {
   if (!url || url.startsWith('data:') || url.startsWith('https://') || url.startsWith('wxfile://')) {
     return Promise.resolve(url)
   }
-  const fullUrl = url.startsWith('http://') ? url : `${BASE}${url}`
-  if (imgCache.has(fullUrl)) return Promise.resolve(imgCache.get(fullUrl))
-  return new Promise((resolve) => {
-    wx.downloadFile({
-      url: fullUrl,
-      success: (res) => {
-        if (res.statusCode === 200 && res.tempFilePath) {
-          imgCache.set(fullUrl, res.tempFilePath)
-          resolve(res.tempFilePath)
-        } else {
-          resolve('')
-        }
-      },
-      fail: () => resolve('')
-    })
-  })
+  // HTTP/相对路径 —— wx.downloadFile 在微信平台必须 HTTPS，HTTP 永远无法成功
+  // 直接返回原始 URL：<image> 组件会尝试直接加载（DevTools 开启 urlCheck:false 可用）
+  // 加载失败时由 ProductCard/StoreCard 的 @error → FALLBACK_IMG 兜底
+  return Promise.resolve(url)
 }
 
 uni.preloadProductImages = async function(products) {

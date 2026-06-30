@@ -46,11 +46,14 @@
     </view>
 
     <!-- 商品网格 -->
+    <!-- DEBUG: loading={{ loading }}, products.length={{ products.length }} -->
     <view v-if="loading" class="loading-wrap"><text>加载中...</text></view>
     <view class="product-grid" v-else-if="products.length > 0">
       <ProductCard v-for="item in products" :key="item.id" :item="item" />
     </view>
-    <EmptyState v-else description="暂无商品" />
+    <view v-else class="loading-wrap">
+      <text>暂无数据 (products={{ products.length }}, loading={{ loading }})</text>
+    </view>
 
     <!-- 加载更多 -->
     <view class="load-more" v-if="hasMore && !loading" @click="loadMore">
@@ -92,29 +95,37 @@ const hasActiveFilter = computed(() =>
   query.productType !== undefined || query.categoryId !== undefined || query.keyword !== ''
 )
 
-// --- 从 NavStore 消费参数 ---
+// --- 从 NavStore 消费参数（只设置 query，不触发 fetch） ---
 function applyNavFilter() {
   const f = navStore.consumeProductFilter()
   if (f.type !== null || f.categoryId !== null || f.keyword !== '') {
     query.productType = f.type !== null ? f.type : undefined
     query.categoryId = f.categoryId || undefined
     query.keyword = f.keyword
-    fetchData(true)
+    return true
   }
+  return false
 }
 
 onLoad((options) => {
+  console.log('[list] onLoad fired, options:', JSON.stringify(options))
+  // 先从 NavStore 读取 switchTab 传递的筛选参数（仅设置 query）
+  applyNavFilter()
+  // URL 参数（H5 或其他直接跳转场景）
   if (options) {
     if (options.type) query.productType = Number(options.type)
     if (options.categoryId) query.categoryId = Number(options.categoryId)
   }
   loadCategories()
-  fetchData(true)
+  fetchData(true) // 统一在此处触发唯一一次数据加载
 })
 
 onShow(() => {
+  // 每次切回 tab 时从 NavStore 消费参数并刷新
   if (!firstLoad.value) {
-    applyNavFilter()
+    if (applyNavFilter()) {
+      fetchData(true)
+    }
   }
   firstLoad.value = false
 })
@@ -142,18 +153,24 @@ async function fetchData(reset = false) {
       keyword: query.keyword || undefined,
       sortBy: query.sortBy !== 'default' ? query.sortBy : undefined
     })
+    console.log('[fetchData] API response:', JSON.stringify({ code: res.code, hasData: !!res.data, recordsCount: res.data?.records?.length }))
     const list = res.data?.records || []
-    await uni.preloadProductImages(list)
+    console.log('[fetchData] list length:', list.length, 'reset:', reset)
+    // 先渲染数据，图片预加载放到后台（避免 wx.downloadFile 超时阻塞页面）
     products.value = reset ? list : [...products.value, ...list]
+    console.log('[fetchData] products.value length:', products.value.length)
+    uni.preloadProductImages(list)
     page.total = res.data?.total || 0
     hasMore.value = products.value.length < page.total
   } catch (e) {
+    console.error('[fetchData] error:', e)
     uni.showToast({ title: '加载商品失败', icon: 'none' })
     if (reset) products.value = []
     hasMore.value = false
   } finally {
     loading.value = false
     loadingMore.value = false
+    console.log('[fetchData] done — loading:', loading.value, 'products:', products.value.length)
   }
 }
 

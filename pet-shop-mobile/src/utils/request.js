@@ -60,16 +60,29 @@ function request(config) {
     // 请求拦截
     config = requestInterceptor(config)
 
+    const fullUrl = BASE_URL + config.url
+    const method = config.method || 'GET'
+
+    // 过滤掉 data/params 中值为 undefined 的字段，避免序列化为 "undefined" 导致后端 NumberFormatException
+    const cleanData = config.data || config.params || {}
+    for (const key of Object.keys(cleanData)) {
+      if (cleanData[key] === undefined) delete cleanData[key]
+    }
+
+    console.log('[REQ]', method, fullUrl)
+
     uni.request({
-      url: BASE_URL + config.url,
-      method: config.method || 'GET',
-      data: config.data || config.params || {},
+      url: fullUrl,
+      method: method,
+      data: cleanData,
       header: config.header || { 'Content-Type': 'application/json' },
       timeout: config.timeout || TIMEOUT,
       success: (res) => {
+        console.log('[RES]', res.statusCode, fullUrl)
         responseInterceptor(res).then(resolve).catch(reject)
       },
       fail: (err) => {
+        console.error('[FAIL]', fullUrl, err.errMsg)
         uni.showToast({ title: err.errMsg || '网络错误', icon: 'none' })
         reject(err)
       }

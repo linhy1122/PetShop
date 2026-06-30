@@ -178,10 +178,10 @@ async function loadCart() {
   loading.value = true
   try {
     const items = (await getCartApi(userStore.userInfo.userId)).data || []
-    if (items.length) {
-      await uni.preloadCartImages(items)
-    }
     cartItems.value = items
+    if (items.length) {
+      uni.preloadCartImages(items)
+    }
   } catch (e) {
     uni.showToast({ title: '加载购物车失败', icon: 'none' })
     cartItems.value = []
