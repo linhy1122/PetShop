@@ -1,0 +1,57 @@
+/* =============================================
+   PetShop 主题设计系统 - UniApp 移动端
+   ============================================= */
+
+/* 主色调 */
+$primary-color: #FF6B35;
+$primary-hover: #FF8F5E;
+$primary-dark: #E55A2B;
+$secondary-color: #004E64;
+$accent-color: #FFB347;
+
+/* 背景色 */
+$bg-page: #FDFBF7;
+$bg-card: #FFFFFF;
+$bg-soft: #FFF5ED;
+$bg-gray: #F5F5F5;
+
+/* 文字色 */
+$text-primary: #1A1A2E;
+$text-secondary: #6B7280;
+$text-muted: #9CA3AF;
+
+/* 功能色 */
+$color-success: #10B981;
+$color-warning: #F59E0B;
+$color-danger: #EF4444;
+$color-info: #3B82F6;
+
+/* 圆角 */
+$radius-sm: 8rpx;
+$radius-md: 12rpx;
+$radius-lg: 16rpx;
+$radius-xl: 24rpx;
+$radius-round: 50%;
+
+/* 阴影 */
+$shadow-sm: 0 2rpx 6rpx rgba(26, 26, 46, 0.06);
+$shadow-md: 0 8rpx 32rpx rgba(26, 26, 46, 0.08);
+$shadow-lg: 0 24rpx 80rpx rgba(26, 26, 46, 0.10);
+
+/* 间距 */
+$space-xs: 8rpx;
+$space-sm: 16rpx;
+$space-md: 24rpx;
+$space-lg: 32rpx;
+$space-xl: 48rpx;
+
+/* 字体 */
+$font-size-sm: 24rpx;
+$font-size-base: 28rpx;
+$font-size-md: 32rpx;
+$font-size-lg: 36rpx;
+$font-size-xl: 44rpx;
+
+/* 导航栏高度 */
+$navbar-height: 88rpx;
+$tabbar-height: 100rpx;

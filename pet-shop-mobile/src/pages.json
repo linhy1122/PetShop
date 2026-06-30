@@ -1,0 +1,158 @@
+{
+  "easycom": {
+    "autoscan": true,
+    "custom": {
+      "^u-(.*)": "@/components/u-$1/u-$1.vue"
+    }
+  },
+  "pages": [
+    {
+      "path": "pages/index/index",
+      "style": {
+        "navigationBarTitleText": "PetShop 宠物商店"
+      }
+    },
+    {
+      "path": "pages/product/list/list",
+      "style": {
+        "navigationBarTitleText": "宠物商城"
+      }
+    },
+    {
+      "path": "pages/product/detail/detail",
+      "style": {
+        "navigationBarTitleText": "商品详情"
+      }
+    },
+    {
+      "path": "pages/store/map/map",
+      "style": {
+        "navigationBarTitleText": "附近商店"
+      }
+    },
+    {
+      "path": "pages/store/detail/detail",
+      "style": {
+        "navigationBarTitleText": "店铺详情"
+      }
+    },
+    {
+      "path": "pages/cart/cart",
+      "style": {
+        "navigationBarTitleText": "购物车"
+      }
+    },
+    {
+      "path": "pages/user/user",
+      "style": {
+        "navigationBarTitleText": "个人中心"
+      }
+    },
+    {
+      "path": "pages/login/login",
+      "style": {
+        "navigationBarTitleText": "登录"
+      }
+    },
+    {
+      "path": "pages/register/register",
+      "style": {
+        "navigationBarTitleText": "注册"
+      }
+    },
+    {
+      "path": "pages/oauth/oauth",
+      "style": {
+        "navigationBarTitleText": "登录中..."
+      }
+    },
+    {
+      "path": "pages/order/list/list",
+      "style": {
+        "navigationBarTitleText": "我的订单"
+      }
+    },
+    {
+      "path": "pages/order/detail/detail",
+      "style": {
+        "navigationBarTitleText": "订单详情"
+      }
+    },
+    {
+      "path": "pages/ai/ai",
+      "style": {
+        "navigationBarTitleText": "AI 智能客服"
+      }
+    },
+    {
+      "path": "pages/video/list/list",
+      "style": {
+        "navigationBarTitleText": "宠物视频"
+      }
+    },
+    {
+      "path": "pages/video/player/player",
+      "style": {
+        "navigationBarTitleText": "视频播放"
+      }
+    },
+    {
+      "path": "pages/admin/dashboard/dashboard",
+      "style": {
+        "navigationBarTitleText": "管理控制台"
+      }
+    },
+    {
+      "path": "pages/admin/product/product",
+      "style": {
+        "navigationBarTitleText": "商品管理"
+      }
+    },
+    {
+      "path": "pages/admin/order/order",
+      "style": {
+        "navigationBarTitleText": "订单管理"
+      }
+    },
+    {
+      "path": "pages/admin/video/video",
+      "style": {
+        "navigationBarTitleText": "视频管理"
+      }
+    }
+  ],
+  "globalStyle": {
+    "navigationBarTextStyle": "white",
+    "navigationBarTitleText": "宠物商店",
+    "navigationBarBackgroundColor": "#FF6B35",
+    "backgroundColor": "#FDFBF7"
+  },
+  "tabBar": {
+    "color": "#999999",
+    "selectedColor": "#FF6B35",
+    "backgroundColor": "#FFFFFF",
+    "borderStyle": "black",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "text": "🏠 首页"
+      },
+      {
+        "pagePath": "pages/product/list/list",
+        "text": "🛍️ 商品"
+      },
+      {
+        "pagePath": "pages/store/map/map",
+        "text": "📍 商店"
+      },
+      {
+        "pagePath": "pages/cart/cart",
+        "text": "🛒 购物车"
+      },
+      {
+        "pagePath": "pages/user/user",
+        "text": "👤 我的"
+      }
+    ]
+  }
+}
