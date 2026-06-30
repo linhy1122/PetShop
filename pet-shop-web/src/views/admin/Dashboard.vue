@@ -15,13 +15,36 @@
         <el-statistic title="用户总数" :value="stats.users" />
       </el-col>
     </el-row>
+
+    <!-- 图表组件 -->
+    <AdminCharts />
+       
   </div>
 </template>
 
 <script setup>
-import { reactive } from 'vue'
+import { reactive, onMounted } from 'vue'
+import AdminCharts from '@/components/AdminCharts.vue'
+import { getStatisticsOverview } from '@/api/admin'
 
 const stats = reactive({ products: 0, stores: 0, orders: 0, users: 0 })
 
-// TODO: 从后端API加载统计数据
+// 从后端API加载统计数据
+const loadStats = async () => {
+  try {
+    const res = await getStatisticsOverview()
+    if (res.data) {
+      stats.products = res.data.products || 0
+      stats.stores = res.data.stores || 0
+      stats.orders = res.data.orders || 0
+      stats.users = res.data.users || 0
+    }
+  } catch (error) {
+    console.error('获取统计数据失败', error)
+  }
+}
+
+onMounted(() => {
+  loadStats()
+})
 </script>
