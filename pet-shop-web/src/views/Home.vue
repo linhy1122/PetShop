@@ -25,7 +25,7 @@
       <div class="category-grid">
         <div class="category-card" v-for="cat in petCategories" :key="cat.id"
              @click="$router.push(`/product/list?categoryId=${cat.id}`)">
-          <span class="category-icon">{{ cat.icon }}</span>
+          <img class="category-icon" :src="cat.icon" :alt="cat.name" />
           <span class="category-name">{{ cat.name }}</span>
         </div>
       </div>
@@ -37,7 +37,7 @@
       <div class="product-grid">
         <el-card v-for="item in hotProducts" :key="item.id" class="product-card"
                  shadow="hover" @click="$router.push(`/product/${item.id}`)">
-          <img :src="item.mainImage || '/vite.svg'" :alt="item.name" class="product-img" />
+          <img :src="item.mainImage" :alt="item.name" class="product-img" />
           <div class="product-info">
             <h3>{{ item.name }}</h3>
             <p class="product-desc">{{ item.description }}</p>
@@ -77,14 +77,14 @@ const carouselImages = ref([
 ])
 
 const petCategories = ref([
-  { id: 1, icon: '🐕', name: '狗狗' },
-  { id: 2, icon: '🐱', name: '猫咪' },
-  { id: 3, icon: '🐹', name: '小宠' },
-  { id: 4, icon: '🐟', name: '水族' },
-  { id: 5, icon: '🐦', name: '鸟类' },
-  { id: 6, icon: '🦴', name: '狗粮' },
-  { id: 7, icon: '🐟', name: '猫粮' },
-  { id: 8, icon: '🧸', name: '玩具' },
+    { id: 1, icon: '/狗.png', name: '狗狗' },
+    { id: 2, icon: '/猫咪.png', name: '猫咪' },
+    { id: 3, icon: '/小宠.png', name: '小宠' },
+    { id: 4, icon: '/鱼.png', name: '鱼类' },
+    { id: 5, icon: '/鸟.png', name: '鸟类' },     
+    { id: 6, icon: '/袋装狗粮.png', name: '狗粮' },    
+    { id: 7, icon: '/猫粮.png', name: '猫粮' },
+    { id: 8, icon: '/宠物玩具.png', name: '玩具' },
 ])
 
 onMounted(async () => {
@@ -143,7 +143,7 @@ async function handleAddToCart(product) {
   cursor: pointer; transition: all 0.3s;
 }
 .category-card:hover { transform: translateY(-4px); box-shadow: 0 8px 25px rgba(0,0,0,0.1); }
-.category-icon { font-size: 36px; }
+.category-icon { width: 48px; height: 48px; object-fit: contain; }
 .category-name { font-size: 14px; color: #666; }
 
 .product-grid {
