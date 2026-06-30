@@ -1,122 +1,198 @@
 <template>
   <view class="store-map-page">
     <!-- 搜索栏 -->
-    <view class="map-header">
-      <input class="city-input" v-model="searchCity" placeholder="输入城市名搜索"
-             confirm-type="search" @confirm="fetchStores" />
-      <view class="search-btn" @click="fetchStores">搜索</view>
+    <view class="search-bar">
+      <input class="search-input" v-model="searchCity" placeholder="搜索城市..."
+             confirm-type="search" @confirm="doCitySearch" />
+      <view class="search-btn" @click="doCitySearch">搜索</view>
+      <view class="locate-btn" @click="locateMe">📍</view>
     </view>
 
     <!-- 地图 -->
-    <map id="storeMap" class="store-map" :latitude="mapCenter.lat" :longitude="mapCenter.lng"
-         :scale="mapScale" :markers="markers" :show-location="true"
-         @markertap="onMarkerTap" @callouttap="onMarkerTap">
-    </map>
+    <map class="store-map" :latitude="centerLat" :longitude="centerLng" :markers="markers"
+         :scale="14" @markertap="onMarkerTap" show-location />
 
-    <!-- 选中店铺信息 -->
+    <!-- 选中店铺信息条 -->
     <view class="selected-bar" v-if="selectedStore">
       <view class="selected-info">
-        <text class="selected-name">{{ selectedStore.name }}</text>
-        <text class="selected-addr">{{ selectedStore.address }}</text>
+        <text class="selected-name text-ellipsis">{{ selectedStore.name }}</text>
+        <text class="selected-distance" v-if="selectedStore._distance !== undefined">
+          距您 {{ selectedStore._distance }}km
+        </text>
       </view>
       <view class="selected-actions">
-        <button class="nav-btn" size="mini" @click="navigateTo">导航</button>
-        <button class="detail-btn" size="mini" @click="goDetail">详情</button>
+        <view class="selected-action" @click="navigateToStore">🧭 导航</view>
+        <view class="selected-action primary" @click="goStoreDetail">详情 ›</view>
       </view>
     </view>
 
+    <!-- 加载状态 -->
+    <view v-if="loading" class="loading-wrap"><text>查找店铺中...</text></view>
+
     <!-- 店铺列表 -->
-    <scroll-view scroll-y class="store-list">
-      <StoreCard v-for="store in stores" :key="store.id" :store="store" />
-      <EmptyState v-if="stores.length === 0" description="暂无店铺数据" />
-    </scroll-view>
+    <view class="store-list" v-else>
+      <view class="list-header">
+        <text>附近商店 ({{ stores.length }})</text>
+        <text class="list-sort" v-if="myLat !== null">按距离排序</text>
+      </view>
+      <StoreCard v-for="s in stores" :key="s.id" :store="s" :distance="s._distance" />
+      <EmptyState v-if="stores.length === 0" description="附近暂无商店" />
+    </view>
   </view>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { getStoreListApi } from '@/api/store'
-import { stores as mockStores } from '@/mock'
+import { getStoreListApi, getNearbyStoresApi } from '@/api/store'
 import StoreCard from '@/components/StoreCard.vue'
 import EmptyState from '@/components/EmptyState.vue'
 
 const stores = ref([])
+const markers = ref([])
 const selectedStore = ref(null)
 const searchCity = ref('')
-const mapScale = ref(12)
-const mapCenter = ref({ lng: 118.09, lat: 24.48 })
-const markers = ref([])
+const loading = ref(false)
+const centerLat = ref(24.4798)
+const centerLng = ref(118.0894)
+const myLat = ref(null)
+const myLng = ref(null)
 
-onMounted(() => {
-  fetchStores()
-  getCurrentLocation()
-})
+function calcDistance(lat1, lng1, lat2, lng2) {
+  const R = 6371
+  const dLat = (lat2 - lat1) * Math.PI / 180
+  const dLng = (lng2 - lng1) * Math.PI / 180
+  const a = Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLng / 2) ** 2
+  return parseFloat((R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))).toFixed(1))
+}
 
-function getCurrentLocation() {
-  uni.getLocation({
-    type: 'gcj02',
-    success: (res) => {
-      mapCenter.value = { lng: res.longitude, lat: res.latitude }
-      mapScale.value = 14
-    },
-    fail: () => {
-      // 使用默认位置
-    }
+function sortByDistance(list) {
+  if (myLat.value === null || myLng.value === null) return list
+  list.forEach(s => {
+    s._distance = calcDistance(myLat.value, myLng.value, s.latitude, s.longitude)
   })
+  list.sort((a, b) => a._distance - b._distance)
+  return list
 }
 
-async function fetchStores() {
-  try {
-    const res = await getStoreListApi({ city: searchCity.value || undefined, size: 50 })
-    stores.value = res.data?.records || []
-    if (!stores.value.length) stores.value = mockStores
-  } catch (e) {
-    stores.value = mockStores
-  }
-  updateMarkers()
-}
-
-function updateMarkers() {
-  markers.value = stores.value
+function updateMarkers(list) {
+  markers.value = list
     .filter(s => s.longitude && s.latitude)
-    .map((s, i) => ({
-      id: i,
+    .map(s => ({
+      id: s.id,
       latitude: s.latitude,
       longitude: s.longitude,
       title: s.name,
       width: 30,
       height: 30,
-      callout: { content: s.name, fontSize: 12, padding: 8, display: 'ALWAYS' }
+      callout: { content: s.name, fontSize: 12, padding: 4, display: 'BYCLICK' }
     }))
+}
 
-  if (markers.value.length) {
-    const mapCtx = uni.createMapContext('storeMap')
-    mapCtx.includePoints({
-      points: markers.value.map(m => ({ latitude: m.latitude, longitude: m.longitude })),
-      padding: [50, 50, 50, 50]
+function getCurrentLocation() {
+  return new Promise((resolve) => {
+    uni.getLocation({
+      type: 'gcj02',
+      success: (res) => {
+        myLat.value = res.latitude
+        myLng.value = res.longitude
+        centerLat.value = res.latitude
+        centerLng.value = res.longitude
+        resolve(true)
+      },
+      fail: () => {
+        uni.showToast({ title: '无法获取位置，使用默认位置', icon: 'none' })
+        resolve(false)
+      }
     })
+  })
+}
+
+async function doCitySearch() {
+  loading.value = true
+  selectedStore.value = null
+  try {
+    const city = searchCity.value.trim()
+    const res = await getStoreListApi({ city: city || undefined, size: 50 })
+    let list = res.data?.records || []
+    list = sortByDistance(list)
+    if (list.length > 0) {
+      centerLat.value = list[0].latitude
+      centerLng.value = list[0].longitude
+    }
+    stores.value = list
+    updateMarkers(list)
+  } catch (e) {
+    uni.showToast({ title: '搜索店铺失败', icon: 'none' })
+    stores.value = []
+  } finally {
+    loading.value = false
   }
 }
+
+async function locateMe() {
+  loading.value = true
+  try {
+    await getCurrentLocation()
+    if (myLat.value && myLng.value) {
+      const res = await getNearbyStoresApi(myLng.value, myLat.value, 50)
+      let list = res.data || []
+      list = sortByDistance(list)
+      stores.value = list
+      updateMarkers(list)
+    }
+  } catch (e) {
+    uni.showToast({ title: '加载附近商店失败', icon: 'none' })
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(async () => {
+  loading.value = true
+  await getCurrentLocation()
+  try {
+    if (myLat.value && myLng.value) {
+      const res = await getNearbyStoresApi(myLng.value, myLat.value, 50)
+      let list = res.data || []
+      list = sortByDistance(list)
+      stores.value = list
+      updateMarkers(list)
+    } else {
+      const res = await getStoreListApi({ size: 50 })
+      stores.value = res.data?.records || []
+      updateMarkers(stores.value)
+    }
+  } catch (e) {
+    try {
+      const res = await getStoreListApi({ size: 50 })
+      stores.value = res.data?.records || []
+      updateMarkers(stores.value)
+    } catch (e2) {
+      uni.showToast({ title: '加载店铺失败', icon: 'none' })
+    }
+  } finally {
+    loading.value = false
+  }
+})
 
 function onMarkerTap(e) {
-  const store = stores.value.find(s => s.latitude === e.latitude && s.longitude === e.longitude)
-  if (store) {
-    selectedStore.value = store
-  }
+  const store = stores.value.find(s => s.id === e.detail.markerId)
+  if (store) selectedStore.value = store
 }
 
-function navigateTo() {
+function navigateToStore() {
   if (!selectedStore.value) return
   uni.openLocation({
     latitude: selectedStore.value.latitude,
     longitude: selectedStore.value.longitude,
     name: selectedStore.value.name,
-    address: selectedStore.value.address,
-    scale: 16
+    address: selectedStore.value.address
   })
 }
 
-function goDetail() {
+function goStoreDetail() {
   if (selectedStore.value) {
     uni.navigateTo({ url: `/pages/store/detail/detail?id=${selectedStore.value.id}` })
   }
@@ -124,20 +200,16 @@ function goDetail() {
 </script>
 
 <style scoped>
-.store-map-page {
-  display: flex;
-  flex-direction: column;
-  height: calc(100vh - 100rpx);
-}
+.store-map-page { display: flex; flex-direction: column; height: calc(100vh - 100rpx); }
 
-.map-header {
+.search-bar {
   display: flex;
   gap: 16rpx;
   padding: 20rpx 24rpx;
   background: #fff;
 }
 
-.city-input {
+.search-input {
   flex: 1;
   height: 68rpx;
   background: #f5f5f5;
@@ -156,58 +228,56 @@ function goDetail() {
   height: 68rpx;
 }
 
-.store-map {
-  width: 100%;
-  height: 400rpx;
+.locate-btn {
+  width: 68rpx;
+  height: 68rpx;
+  background: #f5f5f5;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30rpx;
 }
+
+.store-map { width: 100%; height: 500rpx; }
 
 .selected-bar {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
   padding: 20rpx 24rpx;
   background: #fff;
   border-bottom: 1rpx solid #f0f0f0;
 }
 
-.selected-name {
-  font-size: 30rpx;
-  font-weight: 600;
-  display: block;
-}
+.selected-info { flex: 1; overflow: hidden; }
 
-.selected-addr {
+.selected-name { font-size: 30rpx; font-weight: 600; display: block; }
+
+.selected-distance { font-size: 24rpx; color: #FF6B35; }
+
+.selected-actions { display: flex; gap: 16rpx; flex-shrink: 0; }
+
+.selected-action {
+  padding: 12rpx 24rpx;
+  background: #f5f5f5;
+  border-radius: 24rpx;
   font-size: 24rpx;
-  color: #999;
-  display: block;
-  margin-top: 4rpx;
 }
 
-.selected-actions {
+.selected-action.primary { background: #FF6B35; color: #fff; }
+
+.list-header {
   display: flex;
-  gap: 16rpx;
+  justify-content: space-between;
+  padding: 24rpx 24rpx 8rpx;
+  font-size: 28rpx;
+  font-weight: 600;
 }
 
-.nav-btn {
-  background: #3B82F6;
-  color: #fff;
-  border: none;
-  padding: 10rpx 28rpx;
-  border-radius: 8rpx;
-  font-size: 24rpx;
-}
+.list-sort { font-size: 24rpx; color: #FF6B35; font-weight: 400; }
 
-.detail-btn {
-  background: #FF6B35;
-  color: #fff;
-  border: none;
-  padding: 10rpx 28rpx;
-  border-radius: 8rpx;
-  font-size: 24rpx;
-}
+.store-list { flex: 1; padding: 0 24rpx 40rpx; overflow-y: auto; }
 
-.store-list {
-  flex: 1;
-  padding: 20rpx 24rpx;
-}
+.loading-wrap { display: flex; justify-content: center; padding: 120rpx 0; color: #9CA3AF; font-size: 28rpx; }
 </style>

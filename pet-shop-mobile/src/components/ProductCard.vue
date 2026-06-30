@@ -1,12 +1,21 @@
 <template>
   <view class="product-card" @click="goDetail">
-    <image :src="item.mainImage || 'https://picsum.photos/seed/ph/200/200'" mode="aspectFill" class="product-img" />
+    <image :src="imgSrc" mode="aspectFill" class="product-img"
+           @error="onImgError" />
     <view class="product-info">
-      <view class="product-name text-ellipsis-2">{{ item.name }}</view>
+      <view class="product-name text-ellipsis-2">
+        {{ item.name }}
+        <text class="type-tag" :class="item.productType === 1 ? 'tag-pet' : 'tag-goods'">
+          {{ item.productType === 1 ? '宠物' : '周边' }}
+        </text>
+      </view>
       <view class="product-desc text-ellipsis" v-if="item.description">{{ item.description }}</view>
       <view class="product-bottom">
         <text class="price-tag">{{ item.price }}</text>
-        <text class="sales" v-if="item.sales !== undefined">已售 {{ item.sales }}</text>
+        <view class="bottom-right">
+          <text class="stock" v-if="item.productType === 2">库存 {{ item.stock }}</text>
+          <text class="sales" v-if="item.sales !== undefined">已售 {{ item.sales }}</text>
+        </view>
       </view>
       <button class="cart-btn" hover-class="cart-btn-hover" @click.stop="handleAddToCart">
         🛒 加入购物车
@@ -16,6 +25,7 @@
 </template>
 
 <script setup>
+import { ref } from 'vue'
 import { useUserStore } from '@/stores/user'
 import { useCartStore } from '@/stores/cart'
 import { addToCartApi } from '@/api/cart'
@@ -26,6 +36,13 @@ const props = defineProps({
 
 const userStore = useUserStore()
 const cartStore = useCartStore()
+
+const FALLBACK_IMG = 'https://picsum.photos/seed/placeholder/200/200'
+const imgSrc = ref(uni.fixImgUrl(props.item.mainImage) || FALLBACK_IMG)
+
+function onImgError() {
+  imgSrc.value = FALLBACK_IMG
+}
 
 function goDetail() {
   uni.navigateTo({ url: `/pages/product/detail/detail?id=${props.item.id}` })
@@ -74,6 +91,17 @@ async function handleAddToCart() {
   line-height: 1.4;
 }
 
+.type-tag {
+  font-size: 20rpx;
+  padding: 2rpx 10rpx;
+  border-radius: 6rpx;
+  vertical-align: middle;
+  margin-left: 8rpx;
+}
+
+.tag-pet { background: #FFF3E0; color: #F59E0B; }
+.tag-goods { background: #E3F2FD; color: #3B82F6; }
+
 .product-desc {
   font-size: 24rpx;
   color: #9CA3AF;
@@ -87,8 +115,20 @@ async function handleAddToCart() {
   margin-bottom: 16rpx;
 }
 
+.bottom-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4rpx;
+}
+
 .sales {
   font-size: 22rpx;
+  color: #9CA3AF;
+}
+
+.stock {
+  font-size: 20rpx;
   color: #9CA3AF;
 }
 

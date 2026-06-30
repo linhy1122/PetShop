@@ -12,64 +12,97 @@
       </view>
     </view>
 
-    <!-- 搜索 -->
+    <!-- 搜索 + 排序 -->
     <view class="search-bar">
-      <input class="search-input" v-model="keyword" placeholder="搜索商品..." confirm-type="search"
+      <input class="search-input" v-model="query.keyword" placeholder="搜索商品..." confirm-type="search"
              @confirm="doSearch" />
       <view class="search-btn" @click="doSearch">搜索</view>
     </view>
 
-    <!-- 分类标签 -->
-    <scroll-view scroll-x class="category-scroll" v-if="categories.length">
-      <view class="category-tags">
-        <view class="category-tag" v-for="cat in categories" :key="cat.id"
-              :class="{ active: query.categoryId === cat.id }"
-              @click="selectCategory(cat.id)">
-          {{ cat.name }}
+    <!-- 排序栏 -->
+    <view class="sort-bar">
+      <view class="sort-item" :class="{ active: query.sortBy === 'default' }"
+            @click="doSort('default')">综合</view>
+      <view class="sort-item" :class="{ active: query.sortBy === 'price_asc' }"
+            @click="doSort('price_asc')">价格↑</view>
+      <view class="sort-item" :class="{ active: query.sortBy === 'price_desc' }"
+            @click="doSort('price_desc')">价格↓</view>
+      <view class="sort-item" :class="{ active: query.sortBy === 'sales' }"
+            @click="doSort('sales')">销量</view>
+    </view>
+
+    <!-- 分类标签 + 筛选状态 -->
+    <view class="filter-row" v-if="categories.length || hasActiveFilter">
+      <scroll-view scroll-x class="category-scroll" v-if="categories.length">
+        <view class="category-tags">
+          <view class="category-tag" v-for="cat in categories" :key="cat.id"
+                :class="{ active: query.categoryId === cat.id }"
+                @click="selectCategory(cat.id)">
+            {{ cat.name }}
+          </view>
         </view>
-      </view>
-    </scroll-view>
+      </scroll-view>
+      <view class="clear-filter" v-if="hasActiveFilter" @click="clearFilters">清除筛选</view>
+    </view>
 
     <!-- 商品网格 -->
-    <view class="product-grid">
+    <view v-if="loading" class="loading-wrap"><text>加载中...</text></view>
+    <view class="product-grid" v-else-if="products.length > 0">
       <ProductCard v-for="item in products" :key="item.id" :item="item" />
     </view>
-    <EmptyState v-if="!loading && products.length === 0" description="暂无商品" />
+    <EmptyState v-else description="暂无商品" />
 
     <!-- 加载更多 -->
-    <view class="load-more" v-if="hasMore">
-      <text class="load-text" @click="loadMore">{{ loading ? '加载中...' : '加载更多' }}</text>
+    <view class="load-more" v-if="hasMore && !loading" @click="loadMore">
+      <text class="load-text">{{ loadingMore ? '加载中...' : '加载更多' }}</text>
     </view>
-    <view class="load-more" v-else-if="products.length > 0">
+    <view class="load-more" v-else-if="!loading && products.length > 0 && !hasMore">
       <text class="load-text">— 没有更多了 —</text>
     </view>
   </view>
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
-import { onLoad } from '@dcloudio/uni-app'
+import { ref, reactive, computed } from 'vue'
+import { onLoad, onShow } from '@dcloudio/uni-app'
 import { getProductListApi } from '@/api/product'
-import { categories as mockCategories, allProducts as mockAllProducts } from '@/mock'
+import { useNavStore } from '@/stores/nav'
 import request from '@/utils/request'
 import ProductCard from '@/components/ProductCard.vue'
 import EmptyState from '@/components/EmptyState.vue'
 
-const USE_MOCK = true // 小程序静态数据模式
+const navStore = useNavStore()
+
 const loading = ref(false)
+const loadingMore = ref(false)
 const products = ref([])
 const categories = ref([])
-const keyword = ref('')
 const page = reactive({ current: 1, size: 10, total: 0 })
 const hasMore = ref(true)
+const firstLoad = ref(true)
 
 const query = reactive({
   categoryId: undefined,
   productType: undefined,
-  keyword: ''
+  keyword: '',
+  sortBy: 'default'
 })
 
-// 接收 tab 切换参数
+const hasActiveFilter = computed(() =>
+  query.productType !== undefined || query.categoryId !== undefined || query.keyword !== ''
+)
+
+// --- 从 NavStore 消费参数 ---
+function applyNavFilter() {
+  const f = navStore.consumeProductFilter()
+  if (f.type !== null || f.categoryId !== null || f.keyword !== '') {
+    query.productType = f.type !== null ? f.type : undefined
+    query.categoryId = f.categoryId || undefined
+    query.keyword = f.keyword
+    fetchData(true)
+  }
+}
+
 onLoad((options) => {
   if (options) {
     if (options.type) query.productType = Number(options.type)
@@ -79,50 +112,54 @@ onLoad((options) => {
   fetchData(true)
 })
 
+onShow(() => {
+  if (!firstLoad.value) {
+    applyNavFilter()
+  }
+  firstLoad.value = false
+})
+
 async function loadCategories() {
   try {
     const res = await request.get('/category/list')
-    categories.value = res.data || mockCategories
-  } catch (e) { categories.value = mockCategories }
-}
-
-function filterMockProducts() {
-  let list = [...mockAllProducts]
-  if (query.productType) list = list.filter(p => p.productType === query.productType)
-  if (query.categoryId) list = list.filter(p => p.categoryId === query.categoryId)
-  if (query.keyword) list = list.filter(p => p.name.includes(query.keyword))
-  return { records: list, total: list.length }
+    categories.value = res.data || []
+  } catch (e) {
+    categories.value = []
+  }
 }
 
 async function fetchData(reset = false) {
-  if (loading.value) return
+  if (loading.value && reset) return
   if (reset) { page.current = 1; products.value = [] }
-  loading.value = true
+  loading.value = reset
+  loadingMore.value = !reset
   try {
     const res = await getProductListApi({
       page: page.current,
       size: page.size,
       categoryId: query.categoryId || undefined,
       productType: query.productType,
-      keyword: query.keyword || undefined
+      keyword: query.keyword || undefined,
+      sortBy: query.sortBy !== 'default' ? query.sortBy : undefined
     })
     const list = res.data?.records || []
-    if (reset) products.value = list
-    else products.value = [...products.value, ...list]
+    await uni.preloadProductImages(list)
+    products.value = reset ? list : [...products.value, ...list]
     page.total = res.data?.total || 0
     hasMore.value = products.value.length < page.total
   } catch (e) {
-    const mock = filterMockProducts()
-    if (reset) products.value = mock.records
-    page.total = mock.total
+    uni.showToast({ title: '加载商品失败', icon: 'none' })
+    if (reset) products.value = []
     hasMore.value = false
   } finally {
     loading.value = false
+    loadingMore.value = false
   }
 }
 
 function selectType(type) {
   query.productType = type
+  query.categoryId = undefined
   fetchData(true)
 }
 
@@ -132,12 +169,23 @@ function selectCategory(id) {
 }
 
 function doSearch() {
-  query.keyword = keyword.value
+  fetchData(true)
+}
+
+function doSort(sortBy) {
+  query.sortBy = sortBy
+  fetchData(true)
+}
+
+function clearFilters() {
+  query.productType = undefined
+  query.categoryId = undefined
+  query.keyword = ''
   fetchData(true)
 }
 
 function loadMore() {
-  if (!hasMore.value || loading.value) return
+  if (!hasMore.value || loadingMore.value) return
   page.current++
   fetchData(false)
 }
@@ -148,9 +196,7 @@ function loadMore() {
   padding: 24rpx 24rpx 40rpx;
 }
 
-.filter-bar {
-  margin-bottom: 20rpx;
-}
+.filter-bar { margin-bottom: 20rpx; }
 
 .type-tabs {
   display: flex;
@@ -178,7 +224,7 @@ function loadMore() {
 .search-bar {
   display: flex;
   gap: 16rpx;
-  margin-bottom: 20rpx;
+  margin-bottom: 16rpx;
 }
 
 .search-input {
@@ -201,9 +247,40 @@ function loadMore() {
   white-space: nowrap;
 }
 
+.sort-bar {
+  display: flex;
+  gap: 8rpx;
+  margin-bottom: 16rpx;
+  background: #fff;
+  border-radius: 12rpx;
+  padding: 12rpx 20rpx;
+}
+
+.sort-item {
+  flex: 1;
+  text-align: center;
+  font-size: 24rpx;
+  color: #9CA3AF;
+  padding: 8rpx 0;
+  border-radius: 8rpx;
+}
+
+.sort-item.active {
+  color: #FF6B35;
+  font-weight: 600;
+  background: #FFF3E0;
+}
+
+.filter-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16rpx;
+  gap: 16rpx;
+}
+
 .category-scroll {
+  flex: 1;
   white-space: nowrap;
-  margin-bottom: 20rpx;
 }
 
 .category-tags {
@@ -223,6 +300,21 @@ function loadMore() {
 .category-tag.active {
   background: #FF6B35;
   color: #fff;
+}
+
+.clear-filter {
+  flex-shrink: 0;
+  font-size: 24rpx;
+  color: #FF6B35;
+  padding: 8rpx 16rpx;
+}
+
+.loading-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 200rpx 0;
+  color: #9CA3AF;
+  font-size: 28rpx;
 }
 
 .product-grid {

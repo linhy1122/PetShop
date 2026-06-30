@@ -1,8 +1,6 @@
 <template>
   <view class="detail-page">
-    <view v-if="loading" class="loading-wrap">
-      <text>加载中...</text>
-    </view>
+    <view v-if="loading" class="loading-wrap"><text>加载中...</text></view>
 
     <template v-if="product">
       <!-- 图片轮播 -->
@@ -10,10 +8,11 @@
               v-if="allImages.length">
         <swiper-item v-for="(url, i) in allImages" :key="i">
           <image :src="url" mode="aspectFill" class="detail-img"
-                 @click="previewImages(i)" />
+                 @click="previewImages(i)" @error="onImgError" />
         </swiper-item>
       </swiper>
-      <image v-else :src="product.mainImage || 'https://picsum.photos/seed/pd/400/300'" mode="aspectFill" class="detail-img single" />
+      <image v-else :src="mainImg" mode="aspectFill" class="detail-img single"
+             @error="onImgError" />
 
       <!-- 商品信息 -->
       <view class="info-section">
@@ -36,6 +35,12 @@
         </view>
         <view class="info-meta" v-else>
           <text>库存：{{ product.stock }} 件</text>
+        </view>
+
+        <!-- 所属店铺 -->
+        <view class="store-row" v-if="product.storeId" @click="goStore">
+          <text>🏪 所属店铺</text>
+          <text class="store-link">查看详情 ›</text>
         </view>
       </view>
 
@@ -69,7 +74,8 @@
         <view v-for="r in reviews" :key="r.id" class="review-item">
           <view class="review-header">
             <view class="review-stars">
-              <text v-for="i in 5" :key="i" :style="{ color: i <= r.rating ? '#F59E0B' : '#ddd' }">★</text>
+              <text v-for="i in 5" :key="i"
+                    :style="{ color: i <= r.rating ? '#F59E0B' : '#ddd' }">★</text>
             </view>
             <text class="review-time">{{ r.createTime }}</text>
           </view>
@@ -77,6 +83,8 @@
         </view>
       </view>
     </template>
+
+    <EmptyState v-else-if="!loading" description="商品不存在或加载失败" />
   </view>
 </template>
 
@@ -85,26 +93,36 @@ import { ref, computed } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { getProductDetailApi } from '@/api/product'
 import { addToCartApi } from '@/api/cart'
-import { allProducts as mockProducts, reviews as mockReviews } from '@/mock'
 import { useUserStore } from '@/stores/user'
+import { useCartStore } from '@/stores/cart'
 import request from '@/utils/request'
 import EmptyState from '@/components/EmptyState.vue'
 
 const userStore = useUserStore()
+const cartStore = useCartStore()
 const product = ref(null)
 const reviews = ref([])
 const quantity = ref(1)
 const loading = ref(false)
 let productId = ''
 
+const FALLBACK_IMG = 'https://picsum.photos/seed/pd/400/300'
+
+const mainImg = computed(() =>
+  uni.fixImgUrl(product.value?.mainImage) || FALLBACK_IMG
+)
+
 const allImages = computed(() => {
   if (!product.value) return []
   const list = []
-  if (product.value.mainImage) list.push(product.value.mainImage)
+  if (product.value.mainImage) list.push(uni.fixImgUrl(product.value.mainImage) || FALLBACK_IMG)
   try {
     const extras = JSON.parse(product.value.images || '[]')
     if (Array.isArray(extras)) {
-      extras.filter(u => u).forEach(u => { if (!list.includes(u)) list.push(u) })
+      extras.filter(u => u).forEach(u => {
+        const fixed = uni.fixImgUrl(u)
+        if (fixed && !list.includes(fixed)) list.push(fixed)
+      })
     }
   } catch { /* ignore */ }
   return list
@@ -118,29 +136,36 @@ onLoad((options) => {
 async function fetchData() {
   loading.value = true
   try {
-    product.value = (await getProductDetailApi(productId)).data
-    const res = await request.get(`/review/product/${productId}`, { params: { size: 10 } })
-    reviews.value = res.data?.records || []
-    if (!reviews.value.length) reviews.value = mockReviews
+    const data = (await getProductDetailApi(productId)).data
+    await uni.preloadProductImages(data)
+    product.value = data
+    try {
+      const res = await request.get(`/review/product/${productId}`, { params: { size: 10 } })
+      reviews.value = res.data?.records || []
+    } catch (e) {
+      reviews.value = []
+    }
   } catch (e) {
-    product.value = mockProducts.find(p => p.id == productId) || mockProducts[0]
-    reviews.value = mockReviews
+    uni.showToast({ title: '加载商品失败', icon: 'none' })
+    product.value = null
+    reviews.value = []
   } finally {
     loading.value = false
   }
 }
 
 function previewImages(idx) {
-  uni.previewImage({
-    current: idx,
-    urls: allImages.value
-  })
+  uni.previewImage({ current: idx, urls: allImages.value })
+}
+
+function onImgError() {
+  // 图片加载失败，已在 mainImg/allImages 中提供回退
 }
 
 function changeQty(delta) {
   quantity.value += delta
   if (quantity.value < 1) quantity.value = 1
-  const max = product.value.productType === 1 ? 1 : product.value.stock
+  const max = product.value?.productType === 1 ? 1 : (product.value?.stock || 99)
   if (quantity.value > max) quantity.value = max
 }
 
@@ -151,6 +176,7 @@ async function addToCart() {
   }
   try {
     await addToCartApi(userStore.userInfo.userId, product.value.id, quantity.value)
+    cartStore.fetchCart(userStore.userInfo.userId)
     uni.showToast({ title: '已加入购物车', icon: 'success' })
   } catch (e) {
     uni.showToast({ title: e.message || '添加失败', icon: 'none' })
@@ -160,6 +186,12 @@ async function addToCart() {
 function buyNow() {
   addToCart()
   setTimeout(() => uni.switchTab({ url: '/pages/cart/cart' }), 500)
+}
+
+function goStore() {
+  if (product.value?.storeId) {
+    uni.navigateTo({ url: `/pages/store/detail/detail?id=${product.value.storeId}` })
+  }
 }
 </script>
 
@@ -171,10 +203,7 @@ function buyNow() {
   color: #999;
 }
 
-.image-swiper {
-  width: 100%;
-  height: 560rpx;
-}
+.image-swiper { width: 100%; height: 560rpx; }
 
 .detail-img {
   width: 100%;
@@ -182,9 +211,7 @@ function buyNow() {
   background: #f5f5f5;
 }
 
-.detail-img.single {
-  display: block;
-}
+.detail-img.single { display: block; }
 
 .info-section {
   background: #fff;
@@ -199,16 +226,13 @@ function buyNow() {
   margin-bottom: 20rpx;
 }
 
-.info-name {
-  font-size: 36rpx;
-  font-weight: 700;
-  flex: 1;
-}
+.info-name { font-size: 36rpx; font-weight: 700; flex: 1; }
 
 .info-type {
   font-size: 22rpx;
   padding: 4rpx 16rpx;
   border-radius: 8rpx;
+  flex-shrink: 0;
 }
 
 .type-pet { background: #FFF3E0; color: #F59E0B; }
@@ -221,14 +245,8 @@ function buyNow() {
   margin-bottom: 20rpx;
 }
 
-.info-price {
-  font-size: 52rpx;
-}
-
-.info-sales {
-  font-size: 24rpx;
-  color: #999;
-}
+.info-price { font-size: 52rpx; }
+.info-sales { font-size: 24rpx; color: #999; }
 
 .info-meta text {
   display: block;
@@ -236,6 +254,19 @@ function buyNow() {
   color: #666;
   line-height: 2;
 }
+
+.store-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 20rpx;
+  padding-top: 20rpx;
+  border-top: 1rpx solid #f0f0f0;
+  font-size: 26rpx;
+  color: #666;
+}
+
+.store-link { color: #FF6B35; }
 
 .action-section {
   background: #fff;
@@ -251,11 +282,7 @@ function buyNow() {
   font-size: 28rpx;
 }
 
-.qty-ctrl {
-  display: flex;
-  align-items: center;
-  gap: 16rpx;
-}
+.qty-ctrl { display: flex; align-items: center; gap: 16rpx; }
 
 .qty-btn {
   width: 56rpx;
@@ -275,10 +302,7 @@ function buyNow() {
   text-align: center;
 }
 
-.action-btns {
-  display: flex;
-  gap: 20rpx;
-}
+.action-btns { display: flex; gap: 20rpx; }
 
 .cart-btn {
   flex: 1;
@@ -306,22 +330,10 @@ function buyNow() {
   margin-bottom: 20rpx;
 }
 
-.section-title {
-  font-size: 32rpx;
-  font-weight: 700;
-  margin-bottom: 20rpx;
-}
+.section-title { font-size: 32rpx; font-weight: 700; margin-bottom: 20rpx; }
 
-.detail-content {
-  font-size: 28rpx;
-  line-height: 1.8;
-}
-
-.detail-desc {
-  font-size: 28rpx;
-  color: #666;
-  line-height: 1.8;
-}
+.detail-content { font-size: 28rpx; line-height: 1.8; }
+.detail-desc { font-size: 28rpx; color: #666; line-height: 1.8; }
 
 .reviews-section {
   background: #fff;
@@ -334,9 +346,7 @@ function buyNow() {
   border-bottom: 1rpx solid #f0f0f0;
 }
 
-.review-item:last-child {
-  border-bottom: none;
-}
+.review-item:last-child { border-bottom: none; }
 
 .review-header {
   display: flex;
@@ -345,18 +355,8 @@ function buyNow() {
   margin-bottom: 12rpx;
 }
 
-.review-stars {
-  font-size: 28rpx;
-}
+.review-stars { font-size: 28rpx; }
+.review-time { font-size: 24rpx; color: #999; }
 
-.review-time {
-  font-size: 24rpx;
-  color: #999;
-}
-
-.review-content {
-  font-size: 28rpx;
-  color: #333;
-  line-height: 1.6;
-}
+.review-content { font-size: 28rpx; color: #333; line-height: 1.6; }
 </style>

@@ -1,7 +1,6 @@
 <template>
   <view class="empty-state">
-    <image src="/static/empty.png" mode="aspectFit" class="empty-img" v-if="false" />
-    <text class="empty-icon">📭</text>
+    <image src="https://picsum.photos/seed/empty/200/200" mode="aspectFit" class="empty-img" />
     <text class="empty-text">{{ description }}</text>
     <slot>
       <button v-if="showBtn" class="empty-btn" @click="$emit('action')">{{ btnText }}</button>
@@ -10,7 +9,7 @@
 </template>
 
 <script setup>
-const props = defineProps({
+defineProps({
   description: { type: String, default: '暂无数据' },
   showBtn: { type: Boolean, default: false },
   btnText: { type: String, default: '去看看' }
@@ -28,9 +27,11 @@ defineEmits(['action'])
   padding: 120rpx 0;
 }
 
-.empty-icon {
-  font-size: 96rpx;
+.empty-img {
+  width: 240rpx;
+  height: 240rpx;
   margin-bottom: 24rpx;
+  opacity: 0.6;
 }
 
 .empty-text {

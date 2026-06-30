@@ -1,9 +1,13 @@
 <template>
   <view class="store-card" @click="goDetail">
-    <image :src="store.image || 'https://picsum.photos/seed/sc/200/200'" mode="aspectFill" class="store-img" />
+    <image :src="storeImg" mode="aspectFill" class="store-img"
+           @error="onImgError" />
     <view class="store-info">
       <view class="store-name">{{ store.name }}</view>
-      <view class="store-rating">⭐ {{ store.rating || '5.0' }}</view>
+      <view class="store-rating">
+        ⭐ {{ store.rating || '5.0' }}
+        <text class="store-distance" v-if="distance"> · {{ distance }}km</text>
+      </view>
       <view class="store-address text-ellipsis">
         📍 {{ store.province }}{{ store.city }}{{ store.district }} {{ store.address }}
       </view>
@@ -14,9 +18,19 @@
 </template>
 
 <script setup>
+import { ref } from 'vue'
+
 const props = defineProps({
-  store: { type: Object, required: true }
+  store: { type: Object, required: true },
+  distance: { type: Number, default: null }
 })
+
+const FALLBACK_IMG = 'https://picsum.photos/seed/store-fb/200/200'
+const storeImg = ref(uni.fixImgUrl(props.store.image) || FALLBACK_IMG)
+
+function onImgError() {
+  storeImg.value = FALLBACK_IMG
+}
 
 function goDetail() {
   uni.navigateTo({ url: `/pages/store/detail/detail?id=${props.store.id}` })
@@ -59,6 +73,12 @@ function goDetail() {
 .store-rating {
   font-size: 26rpx;
   color: #F59E0B;
+}
+
+.store-distance {
+  font-size: 24rpx;
+  color: #FF6B35;
+  font-weight: 600;
 }
 
 .store-address, .store-hours, .store-phone {

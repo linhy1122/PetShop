@@ -24,3 +24,13 @@ export function updateCartCheckApi(cartId, checked) {
 export function removeCartItemApi(cartId) {
   return request.delete(`/cart/${cartId}`)
 }
+
+/** 批量删除购物车项 */
+export function batchRemoveCartApi(ids) {
+  return request.delete('/cart/batch', { params: { ids } })
+}
+
+/** 清除已下架商品 */
+export function clearOfflineCartApi(userId) {
+  return request.delete('/cart/clear-offline', { params: { userId } })
+}

@@ -1,5 +1,22 @@
 <template>
   <view class="home-page">
+    <!-- 搜索栏 -->
+    <view class="search-bar">
+      <input class="search-input" v-model="searchKeyword" placeholder="搜索宠物、周边..."
+             confirm-type="search" @confirm="doSearch" />
+      <view class="search-btn" @click="doSearch">🔍</view>
+    </view>
+
+    <!-- 用户问候 -->
+    <view class="greeting">
+      <text class="greeting-text" v-if="userStore.isLoggedIn()">
+        Hi，{{ userStore.userInfo.nickname || userStore.userInfo.username }}
+      </text>
+      <text class="greeting-text" v-else>
+        Hi，欢迎光临 <text class="login-link" @click="goLogin">登录</text>
+      </text>
+    </view>
+
     <!-- Banner 轮播 -->
     <swiper class="banner-swiper" :indicator-dots="true" :autoplay="true" :interval="4000" :duration="500" circular>
       <swiper-item v-for="(img, idx) in carouselImages" :key="idx">
@@ -32,12 +49,11 @@
     <!-- 热门商品 -->
     <view class="section">
       <view class="section-title">热门推荐</view>
-      <view class="product-grid">
+      <view v-if="loading" class="loading-wrap"><text>加载中...</text></view>
+      <view class="product-grid" v-else-if="hotProducts.length > 0">
         <ProductCard v-for="item in hotProducts" :key="item.id" :item="item" />
       </view>
-      <view v-if="!loading && hotProducts.length === 0" class="empty-hint">
-        <text>暂无热门商品</text>
-      </view>
+      <EmptyState v-else description="暂无热门商品" />
     </view>
   </view>
 </template>
@@ -45,10 +61,17 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { getHotProductsApi } from '@/api/product'
+import { useUserStore } from '@/stores/user'
+import { useNavStore } from '@/stores/nav'
 import ProductCard from '@/components/ProductCard.vue'
+import EmptyState from '@/components/EmptyState.vue'
+
+const userStore = useUserStore()
+const navStore = useNavStore()
 
 const hotProducts = ref([])
 const loading = ref(false)
+const searchKeyword = ref('')
 
 const carouselImages = [
   'https://picsum.photos/seed/pet1/750/400',
@@ -70,26 +93,85 @@ const petCategories = [
 onMounted(async () => {
   loading.value = true
   try {
-    hotProducts.value = (await getHotProductsApi(8)).data || []
+    const res = await getHotProductsApi(8)
+    const products = res.data || []
+    await uni.preloadProductImages(products)
+    hotProducts.value = products
   } catch (e) {
+    uni.showToast({ title: '加载热门商品失败', icon: 'none' })
     hotProducts.value = []
   } finally {
     loading.value = false
   }
 })
 
+function doSearch() {
+  const kw = searchKeyword.value.trim()
+  if (!kw) return
+  navStore.setProductFilter({ keyword: kw })
+  uni.switchTab({ url: '/pages/product/list/list' })
+}
+
 function goProductList(type) {
-  uni.switchTab({ url: `/pages/product/list/list?type=${type}` })
+  navStore.setProductFilter({ type })
+  uni.switchTab({ url: '/pages/product/list/list' })
 }
 
 function goCategory(categoryId) {
-  uni.switchTab({ url: `/pages/product/list/list?categoryId=${categoryId}` })
+  navStore.setProductFilter({ categoryId })
+  uni.switchTab({ url: '/pages/product/list/list' })
+}
+
+function goLogin() {
+  uni.navigateTo({ url: '/pages/login/login' })
 }
 </script>
 
 <style scoped>
 .home-page {
   padding-bottom: 40rpx;
+}
+
+.search-bar {
+  display: flex;
+  gap: 16rpx;
+  padding: 20rpx 32rpx;
+  background: #fff;
+}
+
+.search-input {
+  flex: 1;
+  height: 72rpx;
+  background: #f5f5f5;
+  border-radius: 36rpx;
+  padding: 0 28rpx;
+  font-size: 28rpx;
+}
+
+.search-btn {
+  width: 72rpx;
+  height: 72rpx;
+  background: #f5f5f5;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32rpx;
+}
+
+.greeting {
+  padding: 16rpx 32rpx 8rpx;
+  background: #fff;
+}
+
+.greeting-text {
+  font-size: 28rpx;
+  color: #6B7280;
+}
+
+.login-link {
+  color: #FF6B35;
+  font-weight: 600;
 }
 
 .banner-swiper {
@@ -194,9 +276,10 @@ function goCategory(categoryId) {
   gap: 20rpx;
 }
 
-.empty-hint {
-  text-align: center;
-  padding: 80rpx 0;
+.loading-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 120rpx 0;
   color: #9CA3AF;
   font-size: 28rpx;
 }

@@ -1,43 +1,80 @@
 <template>
   <view class="cart-page">
-    <EmptyState v-if="!loading && cartItems.length === 0" description="购物车是空的" showBtn btn-text="去逛逛"
-                @action="goShopping" />
+    <EmptyState v-if="!loading && cartItems.length === 0" description="购物车是空的" showBtn
+                btn-text="去逛逛" @action="goShopping" />
 
     <template v-else>
       <!-- 购物车列表 -->
       <view class="cart-list">
-        <view class="cart-item" v-for="item in cartItems" :key="item.id">
-          <view class="item-check" @click="handleCheck(item)">
-            <view class="checkbox" :class="{ checked: item.checked === 1 }">
+        <view class="cart-item" v-for="item in cartItems" :key="item.id"
+              :class="{ offline: item.productStatus === 0 }">
+          <!-- 复选框 -->
+          <view class="item-check" @click="item.productStatus !== 0 && handleCheck(item)">
+            <view class="checkbox" :class="{
+              checked: item.checked === 1,
+              disabled: item.productStatus === 0
+            }">
               <text v-if="item.checked === 1">✓</text>
             </view>
           </view>
-          <image :src="item.productImage || 'https://picsum.photos/seed/placeholder/200/200'" mode="aspectFill" class="item-img" />
+
+          <!-- 商品图片 -->
+          <image :src="getItemImg(item)" mode="aspectFill" class="item-img"
+                 @error="onItemImgError(item)" />
+
+          <!-- 商品信息 -->
           <view class="item-info">
-            <view class="item-name text-ellipsis-2">{{ item.productName }}</view>
-            <view class="item-price">¥{{ item.price }}</view>
+            <view class="item-name-row">
+              <text class="item-name text-ellipsis-2">{{ item.productName }}</text>
+              <text class="offline-tag" v-if="item.productStatus === 0">已下架</text>
+              <text class="type-tag tag-pet" v-else-if="item.productType === 1">宠物</text>
+            </view>
+            <text class="item-price">¥{{ item.price }}</text>
+            <!-- 库存不足警告 -->
+            <text class="stock-warn" v-if="item.productType === 2 && item.quantity > (item.stock || 0)">
+              ⚠ 库存不足（剩余 {{ item.stock }} 件）
+            </text>
+            <text class="item-subtotal">小计：¥{{ (item.price * item.quantity).toFixed(2) }}</text>
           </view>
+
+          <!-- 数量 -->
           <view class="item-quantity">
             <view class="qty-btn" @click="changeQty(item, -1)">-</view>
             <text class="qty-value">{{ item.quantity }}</text>
             <view class="qty-btn" @click="changeQty(item, 1)">+</view>
           </view>
+
+          <!-- 删除 -->
           <view class="item-del" @click="handleRemove(item)">🗑</view>
         </view>
       </view>
 
       <!-- 底部结算栏 -->
       <view class="cart-footer">
-        <view class="footer-check" @click="handleCheckAll">
-          <view class="checkbox" :class="{ checked: allChecked }">
-            <text v-if="allChecked">✓</text>
+        <view class="footer-top" v-if="checkedCount > 0 || offlineCount > 0">
+          <view class="footer-check" @click="handleCheckAll">
+            <view class="checkbox" :class="{ checked: allChecked }">
+              <text v-if="allChecked">✓</text>
+            </view>
+            <text>全选</text>
           </view>
-          <text>全选</text>
+          <view class="footer-actions">
+            <text class="footer-action" v-if="checkedCount > 0" @click="handleBatchRemove">
+              删除选中({{ checkedCount }})
+            </text>
+            <text class="footer-action" v-if="offlineCount > 0" @click="handleClearOffline">
+              清除已下架({{ offlineCount }})
+            </text>
+          </view>
         </view>
-        <view class="footer-total">
-          合计：<text class="total-price">¥{{ totalPrice }}</text>
+        <view class="footer-bottom">
+          <view class="footer-total">
+            合计：<text class="total-price">¥{{ totalPrice }}</text>
+          </view>
+          <button class="checkout-btn" :disabled="totalPrice === '0.00'" @click="handleCheckout">
+            去结算
+          </button>
         </view>
-        <button class="checkout-btn" :disabled="totalPrice === '0.00'" @click="handleCheckout">去结算</button>
       </view>
     </template>
 
@@ -77,9 +114,11 @@ import { ref, computed } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { useUserStore } from '@/stores/user'
 import { useCartStore } from '@/stores/cart'
-import { getCartApi, updateCartCheckApi, updateCartQuantityApi, removeCartItemApi } from '@/api/cart'
+import {
+  getCartApi, updateCartCheckApi, updateCartQuantityApi,
+  removeCartItemApi, batchRemoveCartApi, clearOfflineCartApi
+} from '@/api/cart'
 import { createOrderApi } from '@/api/order'
-import { cartItems as mockCartItems, addresses as mockAddresses } from '@/mock'
 import request from '@/utils/request'
 import EmptyState from '@/components/EmptyState.vue'
 
@@ -95,13 +134,32 @@ const remark = ref('')
 const submitting = ref(false)
 const loading = ref(false)
 
+const FALLBACK_IMG = 'https://picsum.photos/seed/cart-item/200/200'
+
+function getItemImg(item) {
+  return uni.fixImgUrl(item.productImage) || FALLBACK_IMG
+}
+
+function onItemImgError(item) {
+  // handled by fallback
+}
+
 const allChecked = computed(() =>
-  cartItems.value.length > 0 && cartItems.value.every(i => i.checked === 1)
+  cartItems.value.filter(i => i.productStatus !== 0).length > 0 &&
+  cartItems.value.filter(i => i.productStatus !== 0).every(i => i.checked === 1)
+)
+
+const checkedCount = computed(() =>
+  cartItems.value.filter(i => i.checked === 1).length
+)
+
+const offlineCount = computed(() =>
+  cartItems.value.filter(i => i.productStatus === 0).length
 )
 
 const totalPrice = computed(() => {
   return cartItems.value
-    .filter(i => i.checked === 1)
+    .filter(i => i.checked === 1 && i.productStatus !== 0)
     .reduce((sum, i) => sum + i.price * i.quantity, 0)
     .toFixed(2)
 })
@@ -119,34 +177,41 @@ onShow(async () => {
 async function loadCart() {
   loading.value = true
   try {
-    cartItems.value = (await getCartApi(userStore.userInfo.userId)).data || []
-    if (!cartItems.value.length) cartItems.value = mockCartItems
-  } catch (e) { cartItems.value = mockCartItems }
-  finally { loading.value = false }
+    const items = (await getCartApi(userStore.userInfo.userId)).data || []
+    if (items.length) {
+      await uni.preloadCartImages(items)
+    }
+    cartItems.value = items
+  } catch (e) {
+    uni.showToast({ title: '加载购物车失败', icon: 'none' })
+    cartItems.value = []
+  } finally {
+    loading.value = false
+  }
 }
 
 async function loadAddresses() {
   try {
-    const list = (await request.get(`/address/user/${userStore.userInfo.userId}`)).data || []
-    const addrList = list.length ? list : mockAddresses
-    addresses.value = addrList.map(a => ({
-      ...a,
-      label: `${a.receiverName} - ${a.province}${a.city}${a.district} ${a.detail}`
-    }))
-    const defaultAddr = addresses.value.find(a => a.isDefault === 1)
-    if (defaultAddr) {
-      selectedAddressId.value = defaultAddr.id
-      selectedAddressLabel.value = defaultAddr.label
-    } else if (addresses.value.length > 0) {
-      selectedAddressId.value = addresses.value[0].id
-      selectedAddressLabel.value = addresses.value[0].label
+    const res = await request.get(`/address/user/${userStore.userInfo.userId}`)
+    const list = res.data || []
+    if (list.length) {
+      addresses.value = list.map(a => ({
+        ...a,
+        label: `${a.receiverName} - ${a.province}${a.city}${a.district} ${a.detail}`
+      }))
+      const defaultAddr = addresses.value.find(a => a.isDefault === 1)
+      if (defaultAddr) {
+        selectedAddressId.value = defaultAddr.id
+        selectedAddressLabel.value = defaultAddr.label
+      } else if (addresses.value.length > 0) {
+        selectedAddressId.value = addresses.value[0].id
+        selectedAddressLabel.value = addresses.value[0].label
+      }
+    } else {
+      addresses.value = []
     }
   } catch (e) {
-    addresses.value = mockAddresses.map(a => ({ ...a, label: `${a.receiverName} - ${a.province}${a.city}${a.district} ${a.detail}` }))
-    if (addresses.value.length) {
-      selectedAddressId.value = addresses.value[0].id
-      selectedAddressLabel.value = addresses.value[0].label
-    }
+    addresses.value = []
   }
 }
 
@@ -155,30 +220,83 @@ function goShopping() {
 }
 
 async function handleCheck(item) {
+  if (item.productStatus === 0) return
   item.checked = item.checked === 1 ? 0 : 1
-  await updateCartCheckApi(item.id, item.checked)
+  try {
+    await updateCartCheckApi(item.id, item.checked)
+  } catch (e) {
+    item.checked = item.checked === 1 ? 0 : 1 // 回滚
+  }
 }
 
 async function handleCheckAll() {
   const newVal = allChecked.value ? 0 : 1
-  const promises = cartItems.value.map(i => updateCartCheckApi(i.id, newVal))
-  await Promise.all(promises)
-  cartItems.value.forEach(i => i.checked = newVal)
+  const activeItems = cartItems.value.filter(i => i.productStatus !== 0)
+  try {
+    await Promise.all(activeItems.map(i => updateCartCheckApi(i.id, newVal)))
+    activeItems.forEach(i => i.checked = newVal)
+  } catch (e) {
+    uni.showToast({ title: '操作失败', icon: 'none' })
+  }
 }
 
 async function changeQty(item, delta) {
   item.quantity += delta
   if (item.quantity < 1) item.quantity = 1
-  await updateCartQuantityApi(item.id, item.quantity)
+  if (item.productType === 1 && item.quantity > 1) item.quantity = 1
+  try {
+    await updateCartQuantityApi(item.id, item.quantity)
+  } catch (e) {
+    uni.showToast({ title: e.message || '修改失败', icon: 'none' })
+    await loadCart()
+  }
 }
 
 async function handleRemove(item) {
-  const res = await uni.showModal({ title: '提示', content: '确定要移除该商品吗？' })
-  if (res.confirm) {
+  const res = await uni.showModal({ title: '提示', content: `确定要删除「${item.productName}」吗？` })
+  if (!res.confirm) return
+  try {
     await removeCartItemApi(item.id)
     await loadCart()
     cartStore.fetchCart(userStore.userInfo.userId)
-    uni.showToast({ title: '已移除', icon: 'success' })
+    uni.showToast({ title: '已删除', icon: 'success' })
+  } catch (e) {
+    uni.showToast({ title: '删除失败', icon: 'none' })
+  }
+}
+
+async function handleBatchRemove() {
+  if (checkedCount.value === 0) return
+  const res = await uni.showModal({
+    title: '提示',
+    content: `确定要删除选中的 ${checkedCount.value} 件商品吗？`
+  })
+  if (!res.confirm) return
+  try {
+    const ids = cartItems.value.filter(i => i.checked === 1).map(i => i.id)
+    await batchRemoveCartApi(ids)
+    await loadCart()
+    cartStore.fetchCart(userStore.userInfo.userId)
+    uni.showToast({ title: '已删除', icon: 'success' })
+  } catch (e) {
+    uni.showToast({ title: '删除失败', icon: 'none' })
+  }
+}
+
+async function handleClearOffline() {
+  if (offlineCount.value === 0) return
+  const res = await uni.showModal({
+    title: '提示',
+    content: `确定要清除 ${offlineCount.value} 件已下架商品吗？`
+  })
+  if (!res.confirm) return
+  try {
+    await clearOfflineCartApi(userStore.userInfo.userId)
+    await loadCart()
+    cartStore.fetchCart(userStore.userInfo.userId)
+    uni.showToast({ title: '已清除', icon: 'success' })
+  } catch (e) {
+    uni.showToast({ title: '清除失败', icon: 'none' })
   }
 }
 
@@ -200,12 +318,14 @@ function handleCheckout() {
 }
 
 async function submitOrder() {
+  if (submitting.value) return
   submitting.value = true
   try {
     await createOrderApi(userStore.userInfo.userId, selectedAddressId.value, remark.value)
     uni.showToast({ title: '订单创建成功', icon: 'success' })
     dialogVisible.value = false
-    uni.navigateTo({ url: '/pages/order/list/list' })
+    cartStore.fetchCart(userStore.userInfo.userId)
+    setTimeout(() => uni.navigateTo({ url: '/pages/order/list/list' }), 1000)
   } catch (e) {
     uni.showToast({ title: e.message || '下单失败', icon: 'none' })
   } finally {
@@ -215,14 +335,9 @@ async function submitOrder() {
 </script>
 
 <style scoped>
-.cart-page {
-  padding-bottom: 140rpx;
-  min-height: 100vh;
-}
+.cart-page { padding-bottom: 160rpx; min-height: 100vh; }
 
-.cart-list {
-  padding: 20rpx 24rpx;
-}
+.cart-list { padding: 20rpx 24rpx; }
 
 .cart-item {
   display: flex;
@@ -233,6 +348,12 @@ async function submitOrder() {
   padding: 20rpx;
   margin-bottom: 16rpx;
   box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.04);
+  transition: opacity 0.3s;
+}
+
+.cart-item.offline {
+  opacity: 0.55;
+  background: #fafafa;
 }
 
 .checkbox {
@@ -247,10 +368,8 @@ async function submitOrder() {
   color: #fff;
 }
 
-.checkbox.checked {
-  background: #FF6B35;
-  border-color: #FF6B35;
-}
+.checkbox.checked { background: #FF6B35; border-color: #FF6B35; }
+.checkbox.disabled { background: #eee; border-color: #ddd; }
 
 .item-img {
   width: 140rpx;
@@ -260,28 +379,52 @@ async function submitOrder() {
   flex-shrink: 0;
 }
 
-.item-info {
-  flex: 1;
-  overflow: hidden;
+.item-info { flex: 1; overflow: hidden; }
+
+.item-name-row { display: flex; align-items: flex-start; gap: 8rpx; }
+
+.item-name { font-size: 28rpx; color: #333; margin-bottom: 8rpx; flex: 1; }
+
+.offline-tag {
+  font-size: 20rpx;
+  padding: 2rpx 8rpx;
+  border-radius: 4rpx;
+  background: #FFEBEE;
+  color: #F44336;
+  flex-shrink: 0;
 }
 
-.item-name {
-  font-size: 28rpx;
-  color: #333;
-  margin-bottom: 8rpx;
+.type-tag {
+  font-size: 20rpx;
+  padding: 2rpx 8rpx;
+  border-radius: 4rpx;
+  flex-shrink: 0;
 }
+
+.tag-pet { background: #FFF3E0; color: #F59E0B; }
 
 .item-price {
   font-size: 30rpx;
   font-weight: 700;
   color: #FF6B35;
+  display: block;
 }
 
-.item-quantity {
-  display: flex;
-  align-items: center;
-  gap: 8rpx;
+.stock-warn {
+  font-size: 22rpx;
+  color: #F59E0B;
+  display: block;
+  margin-top: 4rpx;
 }
+
+.item-subtotal {
+  font-size: 24rpx;
+  color: #9CA3AF;
+  display: block;
+  margin-top: 4rpx;
+}
+
+.item-quantity { display: flex; align-items: center; gap: 8rpx; }
 
 .qty-btn {
   width: 48rpx;
@@ -295,49 +438,44 @@ async function submitOrder() {
   color: #333;
 }
 
-.qty-value {
-  font-size: 28rpx;
-  font-weight: 600;
-  min-width: 48rpx;
-  text-align: center;
-}
+.qty-value { font-size: 28rpx; font-weight: 600; min-width: 48rpx; text-align: center; }
 
-.item-del {
-  font-size: 36rpx;
-  padding: 8rpx;
-}
+.item-del { font-size: 36rpx; padding: 8rpx; }
 
+/* Footer */
 .cart-footer {
   position: fixed;
   bottom: 100rpx;
   left: 0;
   right: 0;
   background: #fff;
+  box-shadow: 0 -2rpx 12rpx rgba(0,0,0,0.06);
+}
+
+.footer-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12rpx 24rpx;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.footer-check { display: flex; align-items: center; gap: 8rpx; font-size: 26rpx; }
+
+.footer-actions { display: flex; gap: 24rpx; }
+
+.footer-action { font-size: 24rpx; color: #F44336; }
+
+.footer-bottom {
   display: flex;
   align-items: center;
-  padding: 20rpx 24rpx;
-  box-shadow: 0 -2rpx 12rpx rgba(0,0,0,0.06);
+  padding: 16rpx 24rpx;
   gap: 16rpx;
 }
 
-.footer-check {
-  display: flex;
-  align-items: center;
-  gap: 8rpx;
-  font-size: 26rpx;
-}
+.footer-total { flex: 1; text-align: right; font-size: 26rpx; }
 
-.footer-total {
-  flex: 1;
-  text-align: right;
-  font-size: 26rpx;
-}
-
-.total-price {
-  font-size: 36rpx;
-  font-weight: 800;
-  color: #FF6B35;
-}
+.total-price { font-size: 40rpx; font-weight: 800; color: #FF6B35; }
 
 .checkout-btn {
   background: #FF6B35;
@@ -349,9 +487,7 @@ async function submitOrder() {
   font-weight: 600;
 }
 
-.checkout-btn[disabled] {
-  background: #ccc;
-}
+.checkout-btn[disabled] { background: #ccc; }
 
 /* Modal */
 .modal-mask {
@@ -376,27 +512,13 @@ async function submitOrder() {
   to { transform: translateY(0); }
 }
 
-.modal-title {
-  font-size: 34rpx;
-  font-weight: 700;
-  text-align: center;
-  margin-bottom: 32rpx;
-}
+.modal-title { font-size: 34rpx; font-weight: 700; text-align: center; margin-bottom: 32rpx; }
 
-.modal-body {
-  margin-bottom: 32rpx;
-}
+.modal-body { margin-bottom: 32rpx; }
 
-.form-item {
-  margin-bottom: 24rpx;
-}
+.form-item { margin-bottom: 24rpx; }
 
-.form-label {
-  font-size: 28rpx;
-  color: #666;
-  display: block;
-  margin-bottom: 8rpx;
-}
+.form-label { font-size: 28rpx; color: #666; display: block; margin-bottom: 8rpx; }
 
 .form-picker {
   background: #f5f5f5;
@@ -413,16 +535,9 @@ async function submitOrder() {
   font-size: 26rpx;
 }
 
-.form-price {
-  font-size: 40rpx;
-  font-weight: 800;
-  color: #FF6B35;
-}
+.form-price { font-size: 40rpx; font-weight: 800; color: #FF6B35; }
 
-.modal-footer {
-  display: flex;
-  gap: 20rpx;
-}
+.modal-footer { display: flex; gap: 20rpx; }
 
 .cancel-btn {
   flex: 1;
