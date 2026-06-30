@@ -11,7 +11,7 @@
  Target Server Version : 80044 (8.0.44)
  File Encoding         : 65001
 
- Date: 29/06/2026 11:14:03
+ Date: 30/06/2026 09:45:44
 */
 
 SET NAMES utf8mb4;
@@ -36,7 +36,7 @@ CREATE TABLE `t_address`  (
   `deleted` tinyint NULL DEFAULT 0 COMMENT '逻辑删除：0-否, 1-是',
   PRIMARY KEY (`id`) USING BTREE,
   INDEX `idx_user_id`(`user_id` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 4 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '收货地址表' ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 4 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '收货地址表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of t_address
@@ -60,7 +60,7 @@ CREATE TABLE `t_cart`  (
   `deleted` tinyint NULL DEFAULT 0 COMMENT '逻辑删除：0-否, 1-是',
   PRIMARY KEY (`id`) USING BTREE,
   INDEX `idx_user`(`user_id` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 16 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '购物车表' ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 17 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '购物车表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of t_cart
@@ -80,6 +80,7 @@ INSERT INTO `t_cart` VALUES (12, 2, 22, 1, 1, '2026-06-29 10:29:57', '2026-06-29
 INSERT INTO `t_cart` VALUES (13, 2, 27, 1, 1, '2026-06-29 10:54:09', '2026-06-29 10:54:13', 1);
 INSERT INTO `t_cart` VALUES (14, 2, 27, 1, 1, '2026-06-29 10:54:28', '2026-06-29 10:54:33', 1);
 INSERT INTO `t_cart` VALUES (15, 2, 27, 1, 1, '2026-06-29 11:06:42', '2026-06-29 11:06:45', 1);
+INSERT INTO `t_cart` VALUES (16, 2, 10, 1, 1, '2026-06-29 15:36:37', '2026-06-29 15:36:42', 1);
 
 -- ----------------------------
 -- Table structure for t_category
@@ -96,7 +97,7 @@ CREATE TABLE `t_category`  (
   `update_time` datetime NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   `deleted` tinyint NULL DEFAULT 0 COMMENT '逻辑删除：0-否, 1-是',
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 14 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '商品分类表' ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 14 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '商品分类表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of t_category
@@ -131,7 +132,7 @@ CREATE TABLE `t_message`  (
   `deleted` tinyint NULL DEFAULT 0 COMMENT '逻辑删除：0-否, 1-是',
   PRIMARY KEY (`id`) USING BTREE,
   INDEX `idx_user`(`user_id` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 4 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '消息通知表' ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 4 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '消息通知表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of t_message
@@ -177,7 +178,7 @@ CREATE TABLE `t_order`  (
   INDEX `idx_user`(`user_id` ASC) USING BTREE,
   INDEX `idx_status`(`status` ASC) USING BTREE,
   INDEX `idx_order_no`(`order_no` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 9 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '订单表' ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 10 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '订单表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of t_order
@@ -187,9 +188,10 @@ INSERT INTO `t_order` VALUES (2, '20250601002', 3, 2, 1768.00, 1768.00, 'wechat'
 INSERT INTO `t_order` VALUES (3, '20250601003', 4, 3, 2522.00, 2522.00, 'alipay', '2025-06-02 09:00:00', 4, '送朋友的礼物', '', '', '', NULL, '2025-06-05 16:00:00', '2025-06-07 11:00:00', '2026-06-29 11:12:36', '2026-06-29 11:12:36', 0, '', '', '', NULL, NULL, '', NULL, NULL);
 INSERT INTO `t_order` VALUES (4, '20250602001', 2, 1, 68.00, 68.00, 'alipay', '2025-06-02 14:00:00', 4, '', '', '', '', NULL, '2025-06-05 18:00:00', '2025-06-06 10:00:00', '2026-06-29 11:12:36', '2026-06-29 11:12:36', 0, '', '', '', NULL, NULL, '', NULL, NULL);
 INSERT INTO `t_order` VALUES (5, '20250603001', 3, 2, 39.00, 39.00, 'wechat', '2025-06-03 08:00:00', 4, '', '', '', '', NULL, '2025-06-06 12:00:00', '2025-06-07 08:00:00', '2026-06-29 11:12:36', '2026-06-29 11:12:36', 0, '', '', '', NULL, NULL, '', NULL, NULL);
-INSERT INTO `t_order` VALUES (6, '20250628001', 2, 1, 2500.00, 2500.00, '', NULL, 0, '柯基犬订单', '', '', '', NULL, NULL, NULL, '2026-06-29 11:12:36', '2026-06-29 11:12:36', 0, '', '', '', NULL, NULL, '', NULL, NULL);
-INSERT INTO `t_order` VALUES (7, '20250628002', 3, 2, 1600.00, 1600.00, 'alipay', '2025-06-28 14:00:00', 1, '英短蓝猫', '', '', '', NULL, NULL, NULL, '2026-06-29 11:12:36', '2026-06-29 11:12:36', 0, '', '', '', NULL, NULL, '', NULL, NULL);
+INSERT INTO `t_order` VALUES (6, '20250628001', 2, 1, 2500.00, 2500.00, '', NULL, -1, '柯基犬订单', '超时未支付自动取消', '', '', NULL, NULL, NULL, '2026-06-29 11:12:36', '2026-06-29 11:12:36', 0, 'SYSTEM', '', '', NULL, NULL, '', NULL, NULL);
+INSERT INTO `t_order` VALUES (7, '20250628002', 3, 2, 1600.00, 1600.00, 'alipay', '2025-06-28 14:00:00', 2, '英短蓝猫', '', '圆通速递', '1111', '2026-06-29 15:48:55', NULL, NULL, '2026-06-29 11:12:36', '2026-06-29 11:12:36', 0, '', '', '', NULL, NULL, '', NULL, NULL);
 INSERT INTO `t_order` VALUES (8, '20250628003', 4, 3, 168.00, 168.00, 'wechat', '2025-06-28 16:00:00', 2, '猫粮急用', '', '顺丰速运', 'SF1234567890', '2025-06-28 18:00:00', NULL, NULL, '2026-06-29 11:12:36', '2026-06-29 11:12:36', 0, '', '', '', NULL, NULL, '', NULL, NULL);
+INSERT INTO `t_order` VALUES (9, '2071498075666345984', 2, 1, 200.00, 200.00, 'alipay', '2026-06-29 15:36:44', 2, '', '', '顺丰速运', '1111111121212', '2026-06-29 15:37:41', NULL, NULL, '2026-06-29 15:36:42', '2026-06-29 15:36:42', 0, '', '', '', NULL, NULL, '', NULL, NULL);
 
 -- ----------------------------
 -- Table structure for t_order_item
@@ -209,7 +211,7 @@ CREATE TABLE `t_order_item`  (
   `deleted` tinyint NULL DEFAULT 0 COMMENT '逻辑删除：0-否, 1-是',
   PRIMARY KEY (`id`) USING BTREE,
   INDEX `idx_order`(`order_id` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 21 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '订单项表' ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 22 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '订单项表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of t_order_item
@@ -225,6 +227,7 @@ INSERT INTO `t_order_item` VALUES (17, 5, 29, '宠物专用沐浴露500ml', '', 
 INSERT INTO `t_order_item` VALUES (18, 6, 2, '柯基犬幼崽', '', 1, 2500.00, 2500.00, '2026-06-29 11:12:36', '2026-06-29 11:12:36', 0);
 INSERT INTO `t_order_item` VALUES (19, 7, 6, '英短蓝猫', '', 1, 1600.00, 1600.00, '2026-06-29 11:12:36', '2026-06-29 11:12:36', 0);
 INSERT INTO `t_order_item` VALUES (20, 8, 20, '皇家室内成猫粮2kg', '', 1, 168.00, 168.00, '2026-06-29 11:12:36', '2026-06-29 11:12:36', 0);
+INSERT INTO `t_order_item` VALUES (21, 9, 10, '荷兰垂耳兔', '/uploads/86d42483-fb89-4b84-8916-aa1d0f073c97.png', 1, 200.00, 200.00, '2026-06-29 15:36:42', '2026-06-29 15:36:42', 0);
 
 -- ----------------------------
 -- Table structure for t_order_log
@@ -240,7 +243,7 @@ CREATE TABLE `t_order_log`  (
   `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   PRIMARY KEY (`id`) USING BTREE,
   INDEX `idx_order`(`order_id` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 13 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '订单操作日志表' ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 18 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '订单操作日志表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of t_order_log
@@ -257,6 +260,11 @@ INSERT INTO `t_order_log` VALUES (9, 7, '用户', NULL, 0, '提交订单', '2026
 INSERT INTO `t_order_log` VALUES (10, 7, '用户', 0, 1, '支付成功，方式：alipay', '2026-06-29 10:54:33');
 INSERT INTO `t_order_log` VALUES (11, 8, '用户', NULL, 0, '提交订单', '2026-06-29 11:06:45');
 INSERT INTO `t_order_log` VALUES (12, 8, '用户', 0, 1, '支付成功，方式：alipay', '2026-06-29 11:06:46');
+INSERT INTO `t_order_log` VALUES (13, 6, 'SYSTEM', 0, -1, '系统自动取消（超时未支付）', '2026-06-29 15:21:31');
+INSERT INTO `t_order_log` VALUES (14, 9, '用户', NULL, 0, '提交订单', '2026-06-29 15:36:42');
+INSERT INTO `t_order_log` VALUES (15, 9, '用户', 0, 1, '支付成功，方式：alipay', '2026-06-29 15:36:44');
+INSERT INTO `t_order_log` VALUES (16, 9, '管理员', 1, 2, '发货：顺丰速运 1111111121212', '2026-06-29 15:37:41');
+INSERT INTO `t_order_log` VALUES (17, 7, '管理员', 1, 2, '发货：圆通速递 1111', '2026-06-29 15:48:54');
 
 -- ----------------------------
 -- Table structure for t_product
@@ -286,50 +294,50 @@ CREATE TABLE `t_product`  (
   INDEX `idx_category`(`category_id` ASC) USING BTREE,
   INDEX `idx_store`(`store_id` ASC) USING BTREE,
   INDEX `idx_type`(`product_type` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 40 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '商品表' ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 40 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '商品表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of t_product
 -- ----------------------------
-INSERT INTO `t_product` VALUES (1, '纯种金毛幼犬', '血统纯正金毛寻回犬，性格温顺，适合家庭陪伴，已接种两针疫苗', NULL, 'https://ts4.tc.mm.bing.net/th/id/OIP-C.QAZmI98t1kQp5AV4B0ep1wHaHa?r=0&cb=thfvnextfalcon2&rs=1&pid=ImgDetMain&o=7&rm=3', NULL, 1, 1, 1, 1800.00, 1, 12, 1, '金毛寻回犬', '3个月', 1, '2026-06-22 16:24:59', '2026-06-22 16:28:08', 0);
-INSERT INTO `t_product` VALUES (2, '柯基犬幼崽', '双色柯基，短腿翘臀，活泼可爱，已驱虫已疫苗', NULL, 'https://picsum.photos/seed/corgi/400/300', NULL, 1, 3, 1, 2500.00, 1, 8, 1, '彭布罗克柯基', '2个月', 2, '2026-06-22 16:24:59', '2026-06-22 16:24:59', 0);
-INSERT INTO `t_product` VALUES (3, '泰迪贵宾犬', '玩具泰迪，体型小巧，不掉毛，适合公寓饲养', NULL, 'https://picsum.photos/seed/tady/400/300', NULL, 1, 1, 1, 1500.00, 1, 15, 1, '贵宾犬', '4个月', 2, '2026-06-22 16:24:59', '2026-06-22 16:24:59', 0);
-INSERT INTO `t_product` VALUES (4, '哈士奇幼犬', '蓝眼三把火，品相极佳，精力充沛，适合活跃家庭', NULL, 'https://picsum.photos/seed/husky/400/300', NULL, 1, 3, 1, 2200.00, 1, 6, 1, '西伯利亚哈士奇', '3个月', 1, '2026-06-22 16:24:59', '2026-06-22 16:24:59', 0);
-INSERT INTO `t_product` VALUES (5, '拉布拉多幼犬', '奶油色拉布拉多，智商高易训练，导盲犬首选品种', NULL, 'https://picsum.photos/seed/lab/400/300', NULL, 1, 1, 1, 2000.00, 1, 10, 1, '拉布拉多寻回犬', '3个月', 1, '2026-06-22 16:24:59', '2026-06-22 16:24:59', 0);
-INSERT INTO `t_product` VALUES (6, '英短蓝猫', '英国短毛猫，圆脸大眼，性格安静温顺，品相一流', NULL, 'https://picsum.photos/seed/bluecat/400/300', NULL, 2, 4, 1, 1600.00, 1, 20, 1, '英国短毛猫', '4个月', 2, '2026-06-22 16:24:59', '2026-06-22 16:24:59', 0);
-INSERT INTO `t_product` VALUES (7, '布偶猫', '双色布偶，仙女颜值，性格粘人像狗狗，适合陪伴', NULL, 'https://picsum.photos/seed/ragdoll/400/300', NULL, 2, 4, 1, 3500.00, 1, 5, 1, '布偶猫', '5个月', 1, '2026-06-22 16:24:59', '2026-06-22 16:24:59', 0);
-INSERT INTO `t_product` VALUES (8, '美短虎斑', '美国短毛猫银虎斑，体格健壮，花纹清晰美观', NULL, 'https://picsum.photos/seed/americat/400/300', NULL, 2, 2, 1, 1200.00, 1, 9, 1, '美国短毛猫', '3个月', 1, '2026-06-22 16:24:59', '2026-06-22 16:24:59', 0);
-INSERT INTO `t_product` VALUES (9, '暹罗猫', '挖煤工暹罗，蓝眼重点色，聪明活泼爱撒娇', NULL, 'https://picsum.photos/seed/siamese/400/300', NULL, 2, 2, 1, 1000.00, 1, 7, 1, '暹罗猫', '4个月', 2, '2026-06-22 16:24:59', '2026-06-22 16:24:59', 0);
-INSERT INTO `t_product` VALUES (10, '荷兰垂耳兔', '萌萌垂耳兔，温顺可爱，适合小朋友饲养', NULL, 'https://picsum.photos/seed/rabbit/400/300', NULL, 3, 2, 1, 200.00, 1, 25, 1, '荷兰垂耳兔', '2个月', 2, '2026-06-22 16:24:59', '2026-06-22 16:24:59', 0);
-INSERT INTO `t_product` VALUES (11, '龙猫', '标灰色龙猫，绒毛超级柔软，夜间活跃白天安静', NULL, 'https://picsum.photos/seed/chinchilla/400/300', NULL, 3, 5, 1, 800.00, 1, 4, 1, '龙猫', '6个月', 1, '2026-06-22 16:24:59', '2026-06-22 16:24:59', 0);
-INSERT INTO `t_product` VALUES (12, '锦鲤', '红白锦鲤，色泽鲜艳，寓意吉祥，适合庭院鱼池', NULL, 'https://picsum.photos/seed/koi/400/300', NULL, 4, 5, 1, 300.00, 1, 11, 1, '红白锦鲤', '1岁', 0, '2026-06-22 16:24:59', '2026-06-22 16:24:59', 0);
-INSERT INTO `t_product` VALUES (13, '泰国斗鱼', '半月斗鱼，颜色绚丽，好养耐活，适合桌面鱼缸', NULL, 'https://picsum.photos/seed/betta/400/300', NULL, 4, 2, 1, 50.00, 1, 30, 1, '泰国斗鱼', '成鱼', 1, '2026-06-22 16:24:59', '2026-06-22 16:24:59', 0);
-INSERT INTO `t_product` VALUES (14, '虎皮鹦鹉', '蓝黄虎皮鹦鹉，活泼好动，可训练上手，适合新手饲养', NULL, 'https://picsum.photos/seed/budgie/400/300', NULL, 5, 5, 1, 80.00, 1, 18, 1, '虎皮鹦鹉', '3个月', 0, '2026-06-22 16:24:59', '2026-06-22 16:24:59', 0);
-INSERT INTO `t_product` VALUES (15, '皇家小型犬成犬粮2kg', '法国皇家狗粮，精准营养配方，适口性佳', NULL, 'https://picsum.photos/seed/dogfood1/400/300', NULL, 6, 1, 2, 158.00, 188, 168, 1, '', '', 0, '2026-06-22 16:24:59', '2026-06-22 16:24:59', 0);
-INSERT INTO `t_product` VALUES (16, '比瑞吉天然全价狗粮1.5kg', '天然食材，无谷低敏，小颗粒易咀嚼', NULL, 'https://picsum.photos/seed/dogfood2/400/300', NULL, 6, 3, 2, 128.00, 150, 89, 1, '', '', 0, '2026-06-22 16:24:59', '2026-06-22 16:24:59', 0);
-INSERT INTO `t_product` VALUES (17, '麦富迪牛肉双拼狗粮2kg', '鲜牛肉+冻干双拼，高肉含量，适口性极佳', NULL, 'https://picsum.photos/seed/dogfood3/400/300', NULL, 6, 2, 2, 89.00, 300, 234, 1, '', '', 0, '2026-06-22 16:24:59', '2026-06-22 16:24:59', 0);
-INSERT INTO `t_product` VALUES (18, '皇家室内成猫粮2kg', '针对室内猫咪配方，帮助化毛，促进消化', NULL, 'https://picsum.photos/seed/catfood1/400/300', NULL, 7, 4, 2, 168.00, 180, 145, 1, '', '', 0, '2026-06-22 16:24:59', '2026-06-22 16:24:59', 0);
-INSERT INTO `t_product` VALUES (19, '渴望六种鱼猫粮1.8kg', '加拿大进口，6种深海鱼，85%含肉量', NULL, 'https://picsum.photos/seed/catfood2/400/300', NULL, 7, 4, 2, 320.00, 80, 67, 1, '', '', 0, '2026-06-22 16:24:59', '2026-06-22 16:24:59', 0);
-INSERT INTO `t_product` VALUES (20, '网易严选全价猫粮1.8kg', '网易自营品牌，70%鲜肉含量，性价比之选', NULL, 'https://picsum.photos/seed/catfood3/400/300', NULL, 7, 2, 2, 79.00, 250, 312, 1, '', '', 0, '2026-06-22 16:24:59', '2026-06-22 16:24:59', 0);
-INSERT INTO `t_product` VALUES (21, '鸡肉绕钙奶棒100g', '天然鸡肉制成，磨牙洁齿，补充钙质', NULL, 'https://ts1.tc.mm.bing.net/th/id/R-C.b87358632e859eee9000d182a08364d8?rik=Su7QRvdNRTRUfg&riu=http%3a%2f%2fwww.gzkyz.com.cn%2fimg%2f2022%2f05%2f06%2f78383e5ea38ffc958d262eb566b9bd6a.jpg&ehk=e4MomLwwjIlX29mp9jB2Fc6DviaAaPZtThcqBHDSO2o%3d&risl=&pid=ImgRaw&r=0', NULL, 8, 1, 2, 25.00, 499, 452, 1, '', '', 0, '2026-06-22 16:24:59', '2026-06-24 11:48:18', 0);
-INSERT INTO `t_product` VALUES (22, '猫咪猫薄荷饼干80g', '天然猫薄荷+鸡肉配方，猫咪最爱，帮助消化', NULL, 'https://picsum.photos/seed/snack2/400/300', NULL, 8, 4, 2, 19.00, 399, 381, 1, '', '', 0, '2026-06-22 16:24:59', '2026-06-22 16:24:59', 0);
-INSERT INTO `t_product` VALUES (23, '冻干三文鱼块50g', '纯肉冻干技术，锁住营养和鲜味，猫狗通用', NULL, 'https://picsum.photos/seed/snack3/400/300', NULL, 8, 2, 2, 35.00, 350, 290, 1, '', '', 0, '2026-06-22 16:24:59', '2026-06-22 16:24:59', 0);
-INSERT INTO `t_product` VALUES (24, '耐咬橡胶磨牙球', '天然橡胶材质，内置发声器，耐咬耐玩', NULL, 'https://picsum.photos/seed/toy1/400/300', NULL, 9, 1, 2, 29.00, 300, 267, 1, '', '', 0, '2026-06-22 16:24:59', '2026-06-22 16:24:59', 0);
-INSERT INTO `t_product` VALUES (25, '电动仿真鱼', '触碰感应自动摇摆，内含猫薄荷，猫咪疯狂追逐', NULL, 'https://picsum.photos/seed/toy2/400/300', NULL, 9, 4, 2, 39.00, 200, 189, 1, '', '', 0, '2026-06-22 16:24:59', '2026-06-22 16:24:59', 0);
-INSERT INTO `t_product` VALUES (26, '狗狗飞盘', '软胶材质不伤牙龈，户外互动必备', NULL, 'https://picsum.photos/seed/toy3/400/300', NULL, 9, 3, 2, 22.00, 400, 356, 1, '', '', 0, '2026-06-22 16:24:59', '2026-06-22 16:24:59', 0);
-INSERT INTO `t_product` VALUES (27, '猫咪逗猫棒套装', '3件套组合装，羽毛+铃铛+激光笔，主子玩不腻', NULL, 'https://ts3.tc.mm.bing.net/th/id/OIP-C.K9ijpWmwgaCwUmlP6axzRAHaHS?r=0&cb=thfvnextfalcon2&rs=1&pid=ImgDetMain&o=7&rm=3', NULL, 9, 4, 2, 18.00, 495, 484, 1, '', '', 0, '2026-06-22 16:24:59', '2026-06-24 11:48:17', 0);
-INSERT INTO `t_product` VALUES (28, '四季通用狗窝M号', '可拆洗，加厚PP棉填充，柔软舒适保暖', NULL, 'https://picsum.photos/seed/bed1/400/300', NULL, 10, 1, 2, 68.00, 120, 98, 1, '', '', 0, '2026-06-22 16:24:59', '2026-06-22 16:24:59', 0);
-INSERT INTO `t_product` VALUES (29, '封闭式猫窝', '半封闭设计给猫咪安全感，内附软垫可拆洗', NULL, 'https://picsum.photos/seed/bed2/400/300', NULL, 10, 4, 2, 79.00, 100, 87, 1, '', '', 0, '2026-06-22 16:24:59', '2026-06-22 16:24:59', 0);
-INSERT INTO `t_product` VALUES (30, '宠物凉席垫子L号', '冰丝凉席面料，夏季降温神器，大狗也能用', NULL, 'https://picsum.photos/seed/bed3/400/300', NULL, 10, 2, 2, 45.00, 180, 145, 1, '', '', 0, '2026-06-22 16:24:59', '2026-06-22 16:24:59', 0);
-INSERT INTO `t_product` VALUES (31, '狗狗纯棉T恤M号', '纯棉透气，卡通印花，可机洗不掉色', NULL, 'https://picsum.photos/seed/cloth1/400/300', NULL, 11, 2, 2, 35.00, 200, 156, 1, '', '', 0, '2026-06-22 16:24:59', '2026-06-22 16:24:59', 0);
-INSERT INTO `t_product` VALUES (32, '宠物雨衣', '防水速干面料，带反光条，雨天遛狗必备', NULL, 'https://picsum.photos/seed/cloth2/400/300', NULL, 11, 1, 2, 55.00, 150, 89, 1, '', '', 0, '2026-06-22 16:24:59', '2026-06-22 16:24:59', 0);
-INSERT INTO `t_product` VALUES (33, '宠物专用沐浴露500ml', '温和配方不刺激，留香持久，毛发蓬松顺滑', NULL, 'https://picsum.photos/seed/clean1/400/300', NULL, 12, 2, 2, 39.00, 350, 312, 1, '', '', 0, '2026-06-22 16:24:59', '2026-06-22 16:24:59', 0);
-INSERT INTO `t_product` VALUES (34, '猫砂盆全封闭式', '防外溅设计，活性炭过滤除臭，抽屉式易清理', NULL, 'https://picsum.photos/seed/clean2/400/300', NULL, 12, 4, 2, 89.00, 90, 78, 1, '', '', 0, '2026-06-22 16:24:59', '2026-06-22 16:24:59', 0);
-INSERT INTO `t_product` VALUES (35, '豆腐猫砂6L', '天然豆腐渣制成，可冲马桶，结团快吸臭强', NULL, 'https://picsum.photos/seed/clean3/400/300', NULL, 12, 4, 2, 29.00, 400, 389, 1, '', '', 0, '2026-06-22 16:24:59', '2026-06-24 11:48:18', 0);
-INSERT INTO `t_product` VALUES (36, '宠物驱虫药体内外一体', '广谱驱虫，一月一次，安全有效适用于猫狗', NULL, 'https://picsum.photos/seed/med1/400/300', NULL, 13, 1, 2, 68.00, 300, 256, 1, '', '', 0, '2026-06-22 16:24:59', '2026-06-22 16:24:59', 0);
-INSERT INTO `t_product` VALUES (37, '宠物益生菌粉30包', '调理肠胃，改善软便拉稀，提高免疫力', NULL, 'https://picsum.photos/seed/med2/400/300', NULL, 13, 2, 2, 58.00, 250, 198, 1, '', '', 0, '2026-06-22 16:24:59', '2026-06-22 16:24:59', 0);
-INSERT INTO `t_product` VALUES (38, '小狗', '这是🐷', '', '/uploads/2e734bba-c81a-4abc-a2eb-31a4c75a6a92.jpg', '[\"/uploads/b2c45085-4a48-47bd-b7b5-08c8d5c104ec.png\",\"/uploads/192e41cd-483c-4dcf-a75a-01bc877a6c9c.jpg\",\"/uploads/cf017d06-991c-437f-979f-a532d3c9914f.jpg\",\"/uploads/0a082ac5-8a33-4327-8cda-bf41d3af061c.jpg\",\"/uploads/8a221ff2-a8c9-4be3-8bf2-0990e4504b8c.jpg\"]', 2, 4, 1, 100.00, 1, 0, 1, '', '3个月', 2, '2026-06-24 11:49:04', '2026-06-29 09:11:39', 0);
-INSERT INTO `t_product` VALUES (39, '宇宙第一的狗粮', '', '', '/uploads/ab7f766c-cddd-452f-875f-5ac29cb3c898.png', '[]', 6, 1, 2, 2888.00, 1, 0, 1, '', '', 0, '2026-06-24 17:16:31', '2026-06-25 10:34:12', 0);
+INSERT INTO `t_product` VALUES (1, '纯种金毛幼犬', '血统纯正金毛寻回犬，性格温顺，适合家庭陪伴，已接种两针疫苗', '', '/uploads/0c266130-38fc-416c-8940-f6566f80afc4.png', '[]', 1, 1, 1, 1800.00, 1, 12, 1, '金毛寻回犬', '3个月', 1, '2026-06-22 16:24:59', '2026-06-29 10:47:48', 0);
+INSERT INTO `t_product` VALUES (2, '柯基犬幼崽', '双色柯基，短腿翘臀，活泼可爱，已驱虫已疫苗', NULL, 'https://picsum.photos/seed/corgi/400/300', NULL, 1, 3, 1, 2500.00, 1, 8, 1, '彭布罗克柯基', '2个月', 2, '2026-06-22 16:24:59', '2026-06-29 10:29:02', 1);
+INSERT INTO `t_product` VALUES (3, '泰迪贵宾犬', '玩具泰迪，体型小巧，不掉毛，适合公寓饲养', '', '/uploads/aafc234f-297f-461b-94ce-9c085186677f.png', '[]', 1, 1, 1, 1500.00, 1, 15, 1, '贵宾犬', '4个月', 2, '2026-06-22 16:24:59', '2026-06-29 10:47:42', 0);
+INSERT INTO `t_product` VALUES (4, '哈士奇幼犬', '蓝眼三把火，品相极佳，精力充沛，适合活跃家庭', '', '/uploads/d83f9b6b-afba-4d44-9f3a-f8687a7bbe27.png', '[]', 1, 3, 1, 2200.00, 1, 6, 1, '西伯利亚哈士奇', '3个月', 1, '2026-06-22 16:24:59', '2026-06-29 10:49:13', 0);
+INSERT INTO `t_product` VALUES (5, '拉布拉多幼犬', '奶油色拉布拉多，智商高易训练，导盲犬首选品种', NULL, 'https://picsum.photos/seed/lab/400/300', NULL, 1, 1, 1, 2000.00, 1, 10, 1, '拉布拉多寻回犬', '3个月', 1, '2026-06-22 16:24:59', '2026-06-29 10:29:05', 1);
+INSERT INTO `t_product` VALUES (6, '英短蓝猫', '英国短毛猫，圆脸大眼，性格安静温顺，品相一流', '', '/uploads/db9420d7-7439-4e5f-9923-589c81c50b9e.png', '[]', 2, 4, 1, 1600.00, 1, 20, 1, '英国短毛猫', '4个月', 2, '2026-06-22 16:24:59', '2026-06-29 10:47:28', 0);
+INSERT INTO `t_product` VALUES (7, '布偶猫', '双色布偶，仙女颜值，性格粘人像狗狗，适合陪伴', '', '/uploads/79aa1c90-9d41-4251-9804-3069ef0225dc.png', '[]', 2, 4, 1, 3500.00, 1, 5, 1, '布偶猫', '5个月', 1, '2026-06-22 16:24:59', '2026-06-29 10:49:19', 0);
+INSERT INTO `t_product` VALUES (8, '美短虎斑', '美国短毛猫银虎斑，体格健壮，花纹清晰美观', '', '/uploads/58538f37-c0c5-43fa-82c9-22ca1ebe0ce7.png', '[]', 2, 2, 1, 1200.00, 1, 9, 1, '美国短毛猫', '3个月', 1, '2026-06-22 16:24:59', '2026-06-29 10:48:00', 0);
+INSERT INTO `t_product` VALUES (9, '暹罗猫', '挖煤工暹罗，蓝眼重点色，聪明活泼爱撒娇', NULL, 'https://picsum.photos/seed/siamese/400/300', NULL, 2, 2, 1, 1000.00, 1, 7, 1, '暹罗猫', '4个月', 2, '2026-06-22 16:24:59', '2026-06-29 10:29:42', 1);
+INSERT INTO `t_product` VALUES (10, '荷兰垂耳兔', '萌萌垂耳兔，温顺可爱，适合小朋友饲养', '', '/uploads/86d42483-fb89-4b84-8916-aa1d0f073c97.png', '[]', 3, 2, 1, 200.00, 0, 25, 0, '荷兰垂耳兔', '2个月', 2, '2026-06-22 16:24:59', '2026-06-29 10:47:22', 0);
+INSERT INTO `t_product` VALUES (11, '龙猫', '标灰色龙猫，绒毛超级柔软，夜间活跃白天安静', '', '/uploads/bb06b37b-8d5f-4689-a036-f7f085f846c6.png', '[]', 3, 5, 1, 800.00, 1, 4, 1, '龙猫', '6个月', 1, '2026-06-22 16:24:59', '2026-06-29 10:49:25', 0);
+INSERT INTO `t_product` VALUES (12, '锦鲤', '红白锦鲤，色泽鲜艳，寓意吉祥，适合庭院鱼池', '', '/uploads/10508527-dba8-4b2b-a361-45fa1f70bf6f.png', '[]', 4, 5, 1, 300.00, 1, 11, 1, '红白锦鲤', '1岁', 0, '2026-06-22 16:24:59', '2026-06-29 10:47:54', 0);
+INSERT INTO `t_product` VALUES (13, '泰国斗鱼', '半月斗鱼，颜色绚丽，好养耐活，适合桌面鱼缸', '', '/uploads/c5f23df1-3130-41d5-b131-2715bde76f81.png', '[]', 4, 2, 1, 50.00, 1, 30, 1, '泰国斗鱼', '成鱼', 1, '2026-06-22 16:24:59', '2026-06-29 10:47:16', 0);
+INSERT INTO `t_product` VALUES (14, '虎皮鹦鹉', '蓝黄虎皮鹦鹉，活泼好动，可训练上手，适合新手饲养', '', '/uploads/0bd4332f-7544-4ad4-86be-7e8d0fea7d3d.png', '[]', 5, 5, 1, 80.00, 1, 18, 1, '虎皮鹦鹉', '3个月', 0, '2026-06-22 16:24:59', '2026-06-29 10:47:35', 0);
+INSERT INTO `t_product` VALUES (15, '皇家小型犬成犬粮2kg', '法国皇家狗粮，精准营养配方，适口性佳', '', '/uploads/19844e72-9d5b-42d0-85b0-7ce58591bcb8.png', '[]', 6, 1, 2, 158.00, 188, 168, 1, '', '', 0, '2026-06-22 16:24:59', '2026-06-29 10:41:56', 0);
+INSERT INTO `t_product` VALUES (16, '比瑞吉天然全价狗粮1.5kg', '天然食材，无谷低敏，小颗粒易咀嚼', '', '/uploads/4e7a4f60-cde2-4ff2-a670-f32d991c065d.png', '[]', 6, 3, 2, 128.00, 150, 89, 1, '', '', 0, '2026-06-22 16:24:59', '2026-06-29 10:42:40', 0);
+INSERT INTO `t_product` VALUES (17, '麦富迪牛肉双拼狗粮2kg', '鲜牛肉+冻干双拼，高肉含量，适口性极佳', '', '/uploads/0acd09c5-1925-4b73-ac84-1ad98e957278.png', '[]', 6, 2, 2, 89.00, 300, 234, 1, '', '', 0, '2026-06-22 16:24:59', '2026-06-29 10:41:43', 0);
+INSERT INTO `t_product` VALUES (18, '皇家室内成猫粮2kg', '针对室内猫咪配方，帮助化毛，促进消化', '', '/uploads/12eb68df-6b9b-4ad4-a428-bce9b57cbad5.png', '[]', 7, 4, 2, 168.00, 180, 145, 1, '', '', 0, '2026-06-22 16:24:59', '2026-06-29 10:42:10', 0);
+INSERT INTO `t_product` VALUES (19, '渴望六种鱼猫粮1.8kg', '加拿大进口，6种深海鱼，85%含肉量', '', '/uploads/74b1d967-1d1a-4f76-917d-0885f0448b44.png', '[]', 7, 4, 2, 320.00, 80, 67, 1, '', '', 0, '2026-06-22 16:24:59', '2026-06-29 10:47:09', 0);
+INSERT INTO `t_product` VALUES (20, '网易严选全价猫粮1.8kg', '网易自营品牌，70%鲜肉含量，性价比之选', '', '/uploads/c1fd6351-296b-47bd-b7f9-a973b5096419.png', '[]', 7, 2, 2, 79.00, 250, 312, 1, '', '', 0, '2026-06-22 16:24:59', '2026-06-29 10:24:08', 0);
+INSERT INTO `t_product` VALUES (21, '鸡肉绕钙奶棒100g', '天然鸡肉制成，磨牙洁齿，补充钙质', '', '/uploads/7e810e5e-bfa5-4b0e-9d3e-e24d2bc15d35.png', '[]', 8, 1, 2, 25.00, 500, 450, 1, '', '', 0, '2026-06-22 16:24:59', '2026-06-29 10:22:00', 0);
+INSERT INTO `t_product` VALUES (22, '猫咪猫薄荷饼干80g', '天然猫薄荷+鸡肉配方，猫咪最爱，帮助消化', '', '/uploads/8561aa69-0b7f-4899-8c68-dcc01e73e950.png', '[]', 8, 4, 2, 19.00, 400, 380, 1, '', '', 0, '2026-06-22 16:24:59', '2026-06-29 10:23:22', 0);
+INSERT INTO `t_product` VALUES (23, '冻干三文鱼块50g', '纯肉冻干技术，锁住营养和鲜味，猫狗通用', '', '/uploads/0d5cd1c0-505d-4e01-b473-dfeb3e215767.png', '[]', 8, 2, 2, 35.00, 350, 290, 1, '', '', 0, '2026-06-22 16:24:59', '2026-06-29 10:24:25', 0);
+INSERT INTO `t_product` VALUES (24, '耐咬橡胶磨牙球', '天然橡胶材质，内置发声器，耐咬耐玩', '', '/uploads/daccb850-ac9d-48fb-a6fd-6045e3dc5e8a.png', '[]', 9, 1, 2, 29.00, 300, 267, 1, '', '', 0, '2026-06-22 16:24:59', '2026-06-29 10:24:34', 0);
+INSERT INTO `t_product` VALUES (25, '电动仿真鱼', '触碰感应自动摇摆，内含猫薄荷，猫咪疯狂追逐', NULL, 'https://picsum.photos/seed/toy2/400/300', NULL, 9, 4, 2, 39.00, 200, 189, 1, '', '', 0, '2026-06-22 16:24:59', '2026-06-29 10:30:01', 1);
+INSERT INTO `t_product` VALUES (26, '狗狗飞盘', '软胶材质不伤牙龈，户外互动必备', '', '/uploads/27e8ec70-bbf7-43b9-b85f-9b4d6b7f7de3.png', '[]', 9, 3, 2, 22.00, 400, 356, 1, '', '', 0, '2026-06-22 16:24:59', '2026-06-29 10:23:29', 0);
+INSERT INTO `t_product` VALUES (27, '猫咪逗猫棒套装', '3件套组合装，羽毛+铃铛+激光笔，主子玩不腻', '', '/uploads/f73f1629-4526-4a13-a229-d00c9445de69.png', '[]', 9, 4, 2, 18.00, 497, 481, 1, '', '', 0, '2026-06-22 16:24:59', '2026-06-29 10:21:47', 0);
+INSERT INTO `t_product` VALUES (28, '四季通用狗窝M号', '可拆洗，加厚PP棉填充，柔软舒适保暖', '', '/uploads/6ac85216-717c-4836-b911-9247b66349e7.png', '[]', 10, 1, 2, 68.00, 120, 98, 1, '', '', 0, '2026-06-22 16:24:59', '2026-06-29 10:42:25', 0);
+INSERT INTO `t_product` VALUES (29, '封闭式猫窝', '半封闭设计给猫咪安全感，内附软垫可拆洗', '', '/uploads/7f6c1124-ea87-407a-b5fc-ee74c342be3e.png', '[]', 10, 4, 2, 79.00, 100, 87, 1, '', '', 0, '2026-06-22 16:24:59', '2026-06-29 10:42:46', 0);
+INSERT INTO `t_product` VALUES (30, '宠物凉席垫子L号', '冰丝凉席面料，夏季降温神器，大狗也能用', '', '/uploads/fcb07557-51f0-4b6e-be30-8531f756d107.png', '[]', 10, 2, 2, 45.00, 180, 145, 1, '', '', 0, '2026-06-22 16:24:59', '2026-06-29 10:42:17', 0);
+INSERT INTO `t_product` VALUES (31, '狗狗纯棉T恤M号', '纯棉透气，卡通印花，可机洗不掉色', '', '/uploads/ffbc760b-bf33-49f1-b3ca-cdbcfa7e4f49.png', '[]', 11, 2, 2, 35.00, 200, 156, 1, '', '', 0, '2026-06-22 16:24:59', '2026-06-29 10:42:02', 0);
+INSERT INTO `t_product` VALUES (32, '宠物雨衣', '防水速干面料，带反光条，雨天遛狗必备', '', '/uploads/ccd7d83c-c264-4544-b28b-ea802ebbc333.png', '[]', 11, 1, 2, 55.00, 148, 91, 1, '', '', 0, '2026-06-22 16:24:59', '2026-06-29 10:42:34', 0);
+INSERT INTO `t_product` VALUES (33, '宠物专用沐浴露500ml', '温和配方不刺激，留香持久，毛发蓬松顺滑', '', '/uploads/72b6fae1-e9db-4f88-9011-1f1b6c304d89.png', '[]', 12, 2, 2, 39.00, 350, 312, 1, '', '', 0, '2026-06-22 16:24:59', '2026-06-29 10:24:16', 0);
+INSERT INTO `t_product` VALUES (34, '猫砂盆全封闭式', '防外溅设计，活性炭过滤除臭，抽屉式易清理', '', '/uploads/8901fe7a-85da-4fec-a212-b4d9e8d7ed9d.png', '[]', 12, 4, 2, 89.00, 90, 78, 1, '', '', 0, '2026-06-22 16:24:59', '2026-06-29 10:46:59', 0);
+INSERT INTO `t_product` VALUES (35, '豆腐猫砂6L', '天然豆腐渣制成，可冲马桶，结团快吸臭强', '', '/uploads/35477b0c-9dd5-49ea-b300-dbaabcd2763c.png', '[]', 12, 4, 2, 29.00, 400, 389, 1, '', '', 0, '2026-06-22 16:24:59', '2026-06-29 10:22:22', 0);
+INSERT INTO `t_product` VALUES (36, '宠物驱虫药体内外一体', '广谱驱虫，一月一次，安全有效适用于猫狗', '', '/uploads/ca1a450d-377a-46e9-aafd-744fbea6501f.png', '[]', 13, 1, 2, 68.00, 300, 256, 1, '', '', 0, '2026-06-22 16:24:59', '2026-06-29 10:24:42', 0);
+INSERT INTO `t_product` VALUES (37, '宠物益生菌粉30包', '调理肠胃，改善软便拉稀，提高免疫力', '', '/uploads/29c7ab6e-af8a-4b8a-8141-0192dbc3fbfa.png', '[]', 13, 2, 2, 58.00, 250, 198, 1, '', '', 0, '2026-06-22 16:24:59', '2026-06-29 10:41:50', 0);
+INSERT INTO `t_product` VALUES (38, '小狗', '这是🐷', '', '/uploads/2e734bba-c81a-4abc-a2eb-31a4c75a6a92.jpg', '[\"/uploads/b2c45085-4a48-47bd-b7b5-08c8d5c104ec.png\",\"/uploads/192e41cd-483c-4dcf-a75a-01bc877a6c9c.jpg\",\"/uploads/cf017d06-991c-437f-979f-a532d3c9914f.jpg\",\"/uploads/0a082ac5-8a33-4327-8cda-bf41d3af061c.jpg\",\"/uploads/8a221ff2-a8c9-4be3-8bf2-0990e4504b8c.jpg\"]', 2, 4, 1, 100.00, 0, 0, 0, '', '3个月', 2, '2026-06-24 11:49:04', '2026-06-24 17:09:00', 0);
+INSERT INTO `t_product` VALUES (39, '宇宙第一的狗粮', '', '', '/uploads/ab7f766c-cddd-452f-875f-5ac29cb3c898.png', '[]', 6, 1, 2, 2888.00, 0, 0, 1, '', '', 0, '2026-06-24 17:16:31', '2026-06-29 10:29:49', 1);
 
 -- ----------------------------
 -- Table structure for t_review
@@ -350,7 +358,7 @@ CREATE TABLE `t_review`  (
   PRIMARY KEY (`id`) USING BTREE,
   INDEX `idx_product`(`product_id` ASC) USING BTREE,
   INDEX `idx_user`(`user_id` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 9 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '评价表' ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 9 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '评价表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of t_review
@@ -389,12 +397,12 @@ CREATE TABLE `t_store`  (
   PRIMARY KEY (`id`) USING BTREE,
   INDEX `idx_city`(`city` ASC) USING BTREE,
   INDEX `idx_location`(`longitude` ASC, `latitude` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 6 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '宠物商店表' ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 6 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '宠物商店表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of t_store
 -- ----------------------------
-INSERT INTO `t_store` VALUES (1, '宠爱有家', '十年老店，专注品质宠物，所有宠物均经过健康检疫', 'https://picsum.photos/seed/store1/400/300', '0592-1234567', '09:00-21:00', '福建省', '厦门市', '集美区', '理工路600号', 118.097000, 24.613000, 4.8, 0, '2026-06-22 16:24:59', '2026-06-22 16:24:59', 0);
+INSERT INTO `t_store` VALUES (1, '宠爱有家', '十年老店，专注品质宠物，所有宠物均经过健康检疫', 'https://picsum.photos/seed/store1/400/300', '0592-1234567', '09:00-21:00', '福建省', '厦门市', '集美区', '理工路660号', 118.097000, 24.613000, 4.8, 0, '2026-06-22 16:24:59', '2026-06-29 15:51:46', 0);
 INSERT INTO `t_store` VALUES (2, '萌宠乐园', '品种齐全，售后无忧，提供宠物寄养和美容服务', 'https://picsum.photos/seed/store2/400/300', '0592-2345678', '10:00-22:00', '福建省', '厦门市', '思明区', '思明南路100号', 118.082000, 24.445000, 4.6, 0, '2026-06-22 16:24:59', '2026-06-22 16:24:59', 0);
 INSERT INTO `t_store` VALUES (3, '汪星人宠物', '专业犬类繁育基地，提供冠军血统幼犬，终身健康保障', 'https://picsum.photos/seed/store3/400/300', '0591-3456789', '08:30-20:00', '福建省', '福州市', '鼓楼区', '五四路200号', 119.306000, 26.075000, 4.9, 0, '2026-06-22 16:24:59', '2026-06-22 16:24:59', 0);
 INSERT INTO `t_store` VALUES (4, '喵星球', '猫咪主题宠物店，品种纯正，性格温顺，适合家庭饲养', 'https://picsum.photos/seed/store4/400/300', '0592-4567890', '10:00-20:00', '福建省', '厦门市', '湖里区', '金山路88号', 118.144000, 24.506000, 4.7, 0, '2026-06-22 16:24:59', '2026-06-22 16:24:59', 0);
@@ -422,7 +430,7 @@ CREATE TABLE `t_user`  (
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE INDEX `username`(`username` ASC) USING BTREE,
   UNIQUE INDEX `idx_github_id`(`github_id` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 9 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '用户表' ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 9 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '用户表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of t_user
@@ -433,7 +441,7 @@ INSERT INTO `t_user` VALUES (4, 'lisi', '$2a$10$0TkO4LbyOh0qHk15J0oY2uywVYGOdjpD
 INSERT INTO `t_user` VALUES (5, 'wangwu', '$2a$10$0TkO4LbyOh0qHk15J0oY2uywVYGOdjpD07HwVf6DCDt3bZXzsNwF.', '王五', '13800000003', 'wangwu@qq.com', '', 2, 'user', 0, NULL, '2026-06-22 16:24:59', '2026-06-22 16:24:59', 0);
 INSERT INTO `t_user` VALUES (6, 'zhaoliu', '$2a$10$0TkO4LbyOh0qHk15J0oY2uywVYGOdjpD07HwVf6DCDt3bZXzsNwF.', '赵六', '13800000004', 'zhaoliu@qq.com', '', 0, 'user', 0, NULL, '2026-06-22 16:24:59', '2026-06-22 16:24:59', 0);
 INSERT INTO `t_user` VALUES (7, 'linhy1122', '$2a$10$kb4DAcwl4Ujnm885gRXcB.odyDNPq/ync.U08mUp9Lcj02c0AaAW6', 'linhy1122', '', '1768013886@qq.com', 'https://avatars.githubusercontent.com/u/146430198?v=4', 0, 'user', 0, 146430198, '2026-06-23 22:17:56', '2026-06-23 22:17:56', 0);
-INSERT INTO `t_user` VALUES (8, 'xiaoming', '$2a$10$cXiQqc9lzWPwU6vQgiJ1yOVicSpP0lqXZCV8Sx1sDFI6qzyVZqCT.', '用户ce07d9a4', '', '', '', 0, 'user', 0, NULL, '2026-06-24 08:26:35', '2026-06-24 08:26:35', 0);
+INSERT INTO `t_user` VALUES (8, 'xiaoming', '$2a$10$cXiQqc9lzWPwU6vQgiJ1yOVicSpP0lqXZCV8Sx1sDFI6qzyVZqCT.', '用户ce07d9a4', '', '', '', 0, 'user', 0, NULL, '2026-06-24 08:26:35', '2026-06-30 08:30:55', 0);
 
 -- ----------------------------
 -- Table structure for t_video
@@ -457,7 +465,7 @@ CREATE TABLE `t_video`  (
   PRIMARY KEY (`id`) USING BTREE,
   INDEX `idx_category`(`category_id` ASC) USING BTREE,
   INDEX `idx_product`(`product_id` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 9 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '视频表' ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 9 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '视频表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of t_video
