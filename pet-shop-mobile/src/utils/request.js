@@ -60,13 +60,26 @@ function request(config) {
     // 请求拦截
     config = requestInterceptor(config)
 
-    const fullUrl = BASE_URL + config.url
+    let fullUrl = BASE_URL + config.url
     const method = config.method || 'GET'
 
-    // 过滤掉 data/params 中值为 undefined 的字段，避免序列化为 "undefined" 导致后端 NumberFormatException
-    const cleanData = config.data || config.params || {}
-    for (const key of Object.keys(cleanData)) {
-      if (cleanData[key] === undefined) delete cleanData[key]
+    // params → 拼接到 URL 查询字符串（GET/POST/PUT/DELETE 都适用）
+    // 后端统一使用 @RequestParam，参数必须走 query string
+    if (config.params) {
+      const qs = Object.entries(config.params)
+        .filter(([, v]) => v !== undefined)
+        .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
+        .join('&')
+      if (qs) fullUrl += '?' + qs
+    }
+
+    // data → POST/PUT 请求体（仅当有实际 body 数据时）
+    let body = config.data
+    if (body && typeof body === 'object') {
+      // 过滤 undefined 值
+      for (const key of Object.keys(body)) {
+        if (body[key] === undefined) delete body[key]
+      }
     }
 
     console.log('[REQ]', method, fullUrl)
@@ -74,7 +87,7 @@ function request(config) {
     uni.request({
       url: fullUrl,
       method: method,
-      data: cleanData,
+      data: body || undefined,
       header: config.header || { 'Content-Type': 'application/json' },
       timeout: config.timeout || TIMEOUT,
       success: (res) => {

@@ -4,6 +4,12 @@
                 btn-text="去逛逛" @action="goShopping" />
 
     <template v-else>
+      <!-- 页面标题 -->
+      <view class="cart-header">
+        <text class="cart-title">我的购物车</text>
+        <text class="cart-count" v-if="cartItems.length">共 {{ cartItems.length }} 件</text>
+      </view>
+
       <!-- 购物车列表 -->
       <view class="cart-list">
         <view class="cart-item" v-for="item in cartItems" :key="item.id"
@@ -20,14 +26,15 @@
 
           <!-- 商品图片 -->
           <image :src="getItemImg(item)" mode="aspectFill" class="item-img"
-                 @error="onItemImgError(item)" />
+                 @error="onItemImgError(item)" @click="goProductDetail(item)" />
 
           <!-- 商品信息 -->
           <view class="item-info">
             <view class="item-name-row">
-              <text class="item-name text-ellipsis-2">{{ item.productName }}</text>
+              <text class="item-name text-ellipsis-2" @click="goProductDetail(item)">{{ item.productName }}</text>
               <text class="offline-tag" v-if="item.productStatus === 0">已下架</text>
               <text class="type-tag tag-pet" v-else-if="item.productType === 1">宠物</text>
+              <text class="type-tag tag-goods" v-else-if="item.productType === 2">周边</text>
             </view>
             <text class="item-price">¥{{ item.price }}</text>
             <!-- 库存不足警告 -->
@@ -142,6 +149,12 @@ function getItemImg(item) {
 
 function onItemImgError(item) {
   // handled by fallback
+}
+
+function goProductDetail(item) {
+  if (item.productId) {
+    uni.navigateTo({ url: `/pages/product/detail/detail?id=${item.productId}` })
+  }
 }
 
 const allChecked = computed(() =>
@@ -336,6 +349,24 @@ async function submitOrder() {
 
 <style scoped>
 .cart-page { padding-bottom: 160rpx; min-height: 100vh; }
+
+.cart-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 32rpx 32rpx 16rpx;
+}
+
+.cart-title {
+  font-size: 40rpx;
+  font-weight: 700;
+  color: #1A1A2E;
+}
+
+.cart-count {
+  font-size: 26rpx;
+  color: #9CA3AF;
+}
 
 .cart-list { padding: 20rpx 24rpx; }
 
