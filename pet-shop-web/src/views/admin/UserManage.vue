@@ -56,7 +56,9 @@
       empty-text="暂无用户数据"
       style="width: 100%"
     >
-      <el-table-column prop="id" label="用户ID" width="80" fixed="left" />
+      <el-table-column label="序号" width="80" fixed="left" align="center">
+        <template #default="{ $index }">{{ getUserRowIndex($index) }}</template>
+      </el-table-column>
       <el-table-column label="头像" width="80" align="center">
         <template #default="{ row }">
           <el-avatar :size="42" :src="row.avatar || ''">
@@ -373,6 +375,10 @@ function handleReset() {
 function handleSizeChange() {
   pagination.page = 1
   fetchUserList()
+}
+
+function getUserRowIndex(index) {
+  return (pagination.page - 1) * pagination.size + index + 1
 }
 
 async function openEditDialog(row) {
