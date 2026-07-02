@@ -28,4 +28,7 @@ public interface CartService extends IService<Cart> {
 
     /** 清除用户购物车中已下架的商品 */
     void clearOffline(Long userId);
+
+    /** 全选/全不选当前用户购物车（自动跳过已下架商品） */
+    void checkAll(Long userId, Integer checked);
 }

@@ -69,4 +69,12 @@ public class CartController {
         cartService.clearOffline(userId);
         return Result.ok();
     }
+
+    /** 全选/全不选（自动跳过已下架商品） */
+    @PutMapping("/check-all")
+    public Result<?> checkAll(@RequestParam Long userId,
+                              @RequestParam Integer checked) {
+        cartService.checkAll(userId, checked);
+        return Result.ok();
+    }
 }

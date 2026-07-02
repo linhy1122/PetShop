@@ -167,4 +167,24 @@ public class CartServiceImpl extends ServiceImpl<CartMapper, Cart> implements Ca
             updateById(cart);
         }
     }
+
+    @Override
+    public void checkAll(Long userId, Integer checked) {
+        // 查到用户所有购物车项，跳过已下架商品，批量更新选中状态
+        List<CartItemDto> items = getUserCart(userId);
+        List<Long> ids = items.stream()
+                .filter(item -> item.getProductStatus() != null && item.getProductStatus() != 0)
+                .map(CartItemDto::getId)
+                .collect(Collectors.toList());
+        if (ids.isEmpty()) return;
+
+        List<Cart> updateList = ids.stream().map(id -> {
+            Cart cart = new Cart();
+            cart.setId(id);
+            cart.setChecked(checked);
+            return cart;
+        }).collect(Collectors.toList());
+
+        updateBatchById(updateList);
+    }
 }
