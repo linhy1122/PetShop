@@ -4,9 +4,9 @@
 
     <template v-if="video">
       <!-- 视频播放器 -->
-      <video :src="video.videoUrl" :poster="video.cover" controls
+      <video :src="videoUrl" :poster="coverUrl" controls
              style="width: 100%; height: 450rpx; background: #000;"
-             object-fit="contain" />
+             object-fit="contain" @error="onVideoError" />
 
       <view class="video-info">
         <text class="video-title">{{ video.title }}</text>
@@ -21,7 +21,7 @@
       <view class="linked-section" v-if="linkedProduct">
         <text class="section-title">视频相关商品</text>
         <view class="linked-card" @click="goProduct">
-          <image :src="linkedProduct.mainImage || 'https://picsum.photos/seed/vp/100/100'" mode="aspectFill" class="linked-img" />
+          <image :src="uni.fixImgUrl(linkedProduct.mainImage) || 'https://picsum.photos/seed/vp/100/100'" mode="aspectFill" class="linked-img" />
           <view class="linked-info">
             <text class="linked-name">{{ linkedProduct.name }}</text>
             <text class="price-tag">{{ linkedProduct.price }}</text>
@@ -33,7 +33,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { getVideoDetailApi, likeVideoApi } from '@/api/video'
 import { getProductDetailApi } from '@/api/product'
@@ -42,6 +42,15 @@ import { videos as mockVideos, allProducts as mockProducts } from '@/mock'
 const video = ref(null)
 const linkedProduct = ref(null)
 const loading = ref(false)
+const videoError = ref(false)
+
+const coverUrl = computed(() => uni.fixImgUrl(video.value?.cover) || 'https://picsum.photos/seed/vc/400/225')
+const videoUrl = computed(() => {
+  if (!video.value?.videoUrl) return ''
+  return uni.fixImgUrl(video.value.videoUrl)
+})
+
+function onVideoError() { videoError.value = true }
 
 onLoad((options) => {
   fetchData(options.id)
