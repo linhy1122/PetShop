@@ -1,25 +1,24 @@
 <template>
   <view class="product-card" @click="goDetail">
-    <image :src="imgSrc" mode="aspectFill" class="product-img"
-           @error="onImgError" />
+    <!-- 图片区域 + 类型角标 -->
+    <view class="img-wrap">
+      <image :src="imgSrc" mode="aspectFill" class="product-img"
+             @error="onImgError" />
+      <view class="img-badge" :class="item.productType === 1 ? 'badge-pet' : 'badge-goods'">
+        {{ item.productType === 1 ? '宠物' : '周边' }}
+      </view>
+    </view>
+
+    <!-- 商品信息 -->
     <view class="product-info">
-      <view class="product-name text-ellipsis-2">
-        {{ item.name }}
-        <text class="type-tag" :class="item.productType === 1 ? 'tag-pet' : 'tag-goods'">
-          {{ item.productType === 1 ? '宠物' : '周边' }}
-        </text>
-      </view>
-      <view class="product-desc text-ellipsis" v-if="item.description">{{ item.description }}</view>
-      <view class="product-bottom">
+      <text class="product-name">{{ item.name }}</text>
+      <view class="product-meta">
         <text class="price-tag">{{ item.price }}</text>
-        <view class="bottom-right">
-          <text class="stock" v-if="item.productType === 2">库存 {{ item.stock }}</text>
-          <text class="sales" v-if="item.sales !== undefined">已售 {{ item.sales }}</text>
-        </view>
+        <text class="sales-text" v-if="item.sales">已售{{ item.sales }}</text>
       </view>
-      <button class="cart-btn" hover-class="cart-btn-hover" @click.stop="handleAddToCart">
-        🛒 加入购物车
-      </button>
+      <view class="cart-btn" hover-class="cart-btn-hover" @click.stop="handleAddToCart">
+        <text class="cart-text">🛒 加入购物车</text>
+      </view>
     </view>
   </view>
 </template>
@@ -67,84 +66,100 @@ async function handleAddToCart() {
 <style scoped>
 .product-card {
   background: #fff;
-  border-radius: 16rpx;
+  border-radius: 20rpx;
   overflow: hidden;
-  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.06);
-  margin-bottom: 20rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0,0,0,0.06);
 }
 
-.product-img {
+/* ---- 图片区域（padding-bottom 实现 1:1 正方形，兼容微信小程序） ---- */
+.img-wrap {
+  position: relative;
   width: 100%;
-  height: 340rpx;
+  padding-bottom: 100%;
+  overflow: hidden;
   background: #f5f5f5;
 }
 
+.product-img {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.img-badge {
+  position: absolute;
+  top: 10rpx;
+  left: 10rpx;
+  font-size: 20rpx;
+  padding: 4rpx 12rpx;
+  border-radius: 6rpx;
+}
+
+.badge-pet { background: #FF9800; color: #fff; }
+.badge-goods { background: #2196F3; color: #fff; }
+
+/* ---- 信息区域 ---- */
 .product-info {
-  padding: 20rpx;
+  padding: 16rpx 16rpx 10rpx;
 }
 
 .product-name {
-  font-size: 30rpx;
+  font-size: 28rpx;
   font-weight: 600;
   color: #1A1A2E;
-  margin-bottom: 8rpx;
   line-height: 1.4;
+  display: block;
+  margin-bottom: 10rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.type-tag {
-  font-size: 20rpx;
-  padding: 2rpx 10rpx;
-  border-radius: 6rpx;
-  vertical-align: middle;
-  margin-left: 8rpx;
-}
-
-.tag-pet { background: #FFF3E0; color: #F59E0B; }
-.tag-goods { background: #E3F2FD; color: #3B82F6; }
-
-.product-desc {
-  font-size: 24rpx;
-  color: #9CA3AF;
-  margin-bottom: 12rpx;
-}
-
-.product-bottom {
+.product-meta {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16rpx;
+  align-items: baseline;
+  gap: 10rpx;
 }
 
-.bottom-right {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 4rpx;
+.price-tag {
+  font-size: 34rpx;
+  font-weight: 800;
+  color: #FF6B35;
+  line-height: 1;
 }
 
-.sales {
+.price-tag::before {
+  content: '¥';
   font-size: 22rpx;
-  color: #9CA3AF;
-}
-
-.stock {
-  font-size: 20rpx;
-  color: #9CA3AF;
-}
-
-.cart-btn {
-  width: 100%;
-  background: linear-gradient(135deg, #FF6B35, #FF8F5E);
-  color: #fff;
-  border: none;
-  padding: 16rpx 0;
-  border-radius: 32rpx;
-  font-size: 26rpx;
   font-weight: 600;
-  text-align: center;
+  margin-right: 2rpx;
+}
+
+.sales-text {
+  font-size: 22rpx;
+  color: #B0B0B0;
+}
+
+/* ---- 加购按钮 ---- */
+.cart-btn {
+  margin-top: 12rpx;
+  background: linear-gradient(135deg, #FF6B35, #FF8F5E);
+  border-radius: 28rpx;
+  height: 56rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4rpx 10rpx rgba(255, 107, 53, 0.25);
+}
+
+.cart-text {
+  font-size: 24rpx;
+  color: #fff;
+  font-weight: 500;
 }
 
 .cart-btn-hover {
-  opacity: 0.85;
+  opacity: 0.8;
 }
 </style>

@@ -48,7 +48,10 @@
 
     <!-- 热门商品 -->
     <view class="section">
-      <view class="section-title">热门推荐</view>
+      <view class="section-header">
+        <text class="section-title">热门推荐</text>
+        <text class="section-more" @click="goProductList(undefined)">查看更多 ›</text>
+      </view>
       <view v-if="loading" class="loading-wrap"><text>加载中...</text></view>
       <view class="product-grid" v-else-if="hotProducts.length > 0">
         <ProductCard v-for="item in hotProducts" :key="item.id" :item="item" />
@@ -233,15 +236,25 @@ function goLogin() {
 }
 
 .section {
-  padding: 40rpx 32rpx 0;
+  padding: 40rpx 24rpx 0;
+}
+
+.section-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 24rpx;
 }
 
 .section-title {
   font-size: 36rpx;
   font-weight: 700;
   color: #1A1A2E;
-  text-align: center;
-  margin-bottom: 32rpx;
+}
+
+.section-more {
+  font-size: 26rpx;
+  color: #FF6B35;
 }
 
 .category-grid {
