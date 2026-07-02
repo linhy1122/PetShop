@@ -13,7 +13,8 @@ export const useUserStore = defineStore('user', () => {
     userInfo.value = {
       userId: res.data.userId,
       nickname: res.data.nickname,
-      role: res.data.role
+      role: res.data.role,
+      avatar: res.data.avatar || ''
     }
     uni.setStorageSync('token', token.value)
     uni.setStorageSync('userInfo', JSON.stringify(userInfo.value))
@@ -45,7 +46,8 @@ export const useUserStore = defineStore('user', () => {
     userInfo.value = {
       userId: res.data.userId,
       nickname: res.data.nickname,
-      role: res.data.role
+      role: res.data.role,
+      avatar: res.data.avatar || ''
     }
     uni.setStorageSync('token', token.value)
     uni.setStorageSync('userInfo', JSON.stringify(userInfo.value))
@@ -60,14 +62,22 @@ export const useUserStore = defineStore('user', () => {
   // OAuth 登录处理（保存从回调获取的 token）
   function saveOAuthToken(t, userId, nickname, role) {
     token.value = t
-    userInfo.value = { userId, nickname, role }
+    userInfo.value = { userId, nickname, role, avatar: '' }
     uni.setStorageSync('token', t)
-    uni.setStorageSync('userInfo', JSON.stringify({ userId, nickname, role }))
+    uni.setStorageSync('userInfo', JSON.stringify({ userId, nickname, role, avatar: '' }))
   }
 
   // GitHub OAuth 登录 URL
   function getGithubAuthUrl() {
     return 'http://localhost:8080/oauth/github/authorize'
+  }
+
+  // 更新头像
+  function setAvatar(avatarUrl) {
+    if (userInfo.value) {
+      userInfo.value.avatar = avatarUrl
+      uni.setStorageSync('userInfo', JSON.stringify(userInfo.value))
+    }
   }
 
   // 退出
@@ -82,5 +92,5 @@ export const useUserStore = defineStore('user', () => {
   const isLoggedIn = () => !!token.value
   const isAdmin = () => userInfo.value?.role === 'admin'
 
-  return { token, userInfo, login, wxLogin, register, saveOAuthToken, getGithubAuthUrl, logout, isLoggedIn, isAdmin }
+  return { token, userInfo, login, wxLogin, register, saveOAuthToken, getGithubAuthUrl, setAvatar, logout, isLoggedIn, isAdmin }
 })
