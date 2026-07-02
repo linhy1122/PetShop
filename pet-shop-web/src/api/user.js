@@ -37,7 +37,7 @@ export function updatePasswordApi(userId, oldPassword, newPassword) {
 
 /** GitHub OAuth 授权地址 */
 export function getGithubAuthUrl() {
-  return 'http://localhost:8080/oauth/github/authorize'
+  return 'http://localhost:9090/oauth/github/authorize'
 }
 
 /** 管理端用户分页列表 */
