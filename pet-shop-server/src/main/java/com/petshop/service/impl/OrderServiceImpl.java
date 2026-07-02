@@ -274,6 +274,19 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
     }
 
     @Override
+    @Transactional
+    public void completeOrder(Long orderId) {
+        Order order = getById(orderId);
+        validateStatus(order, 3);
+        int fromStatus = order.getStatus();
+        order.setStatus(4);
+        order.setCommentTime(LocalDateTime.now());
+        order.setFinishTime(LocalDateTime.now());
+        updateById(order);
+        saveOrderLog(orderId, "用户", fromStatus, 4, "评价完成，订单已完成");
+    }
+
+    @Override
     public List<OrderLog> getOrderLogs(Long orderId) {
         LambdaQueryWrapper<OrderLog> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(OrderLog::getOrderId, orderId)

@@ -35,6 +35,9 @@ public interface OrderService extends IService<Order> {
     /** 管理员直接退单 */
     void adminRefund(Long orderId, String reason);
 
+    /** 完成订单（评价后状态 3→4） */
+    void completeOrder(Long orderId);
+
     /** 获取订单操作日志 */
     List<OrderLog> getOrderLogs(Long orderId);
 }

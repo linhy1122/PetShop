@@ -1,5 +1,6 @@
 package com.petshop.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.petshop.common.BaseEntity;
 import lombok.Data;
@@ -27,4 +28,12 @@ public class Review extends BaseEntity {
     private String images;
     /** 商家回复 */
     private String reply;
+
+    /** 评价用户名（非数据库字段，查询时填充） */
+    @TableField(exist = false)
+    private String username;
+
+    /** 评价用户头像（非数据库字段，查询时填充） */
+    @TableField(exist = false)
+    private String avatar;
 }

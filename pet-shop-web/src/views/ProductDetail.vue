@@ -50,11 +50,27 @@
         <h3>商品评价</h3>
         <el-empty v-if="reviews.length === 0" description="暂无评价" />
         <div v-for="r in reviews" :key="r.id" class="review-item">
-          <div class="review-header">
+          <div class="review-user-row">
+            <el-avatar :src="r.avatar" :size="40" class="review-avatar">
+              <span class="avatar-placeholder">{{ (r.username || '匿')[0] }}</span>
+            </el-avatar>
+            <span class="review-username">{{ r.username || '匿名用户' }}</span>
+          </div>
+          <div class="review-meta">
             <el-rate :model-value="r.rating" disabled show-score />
-            <span class="review-time">{{ r.createTime }}</span>
+            <span class="review-time">{{ formatDate(r.createTime) }}</span>
           </div>
           <p class="review-content">{{ r.content }}</p>
+          <div class="review-images" v-if="getReviewImages(r).length > 0">
+            <el-image
+              v-for="(url, i) in getReviewImages(r)"
+              :key="i"
+              :src="url"
+              :preview-src-list="getReviewImages(r)"
+              fit="cover"
+              class="review-image"
+            />
+          </div>
         </div>
       </div>
     </div>
@@ -110,6 +126,21 @@ onMounted(async () => {
     loading.value = false
   }
 })
+
+function getReviewImages(review) {
+  try {
+    const imgs = JSON.parse(review.images || '[]')
+    return Array.isArray(imgs) ? imgs.filter(u => u) : []
+  } catch {
+    return []
+  }
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return ''
+  const d = new Date(dateStr)
+  return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`
+}
 
 async function addToCart() {
   if (!userStore.isLoggedIn()) {
@@ -176,7 +207,14 @@ function buyNow() {
 .detail-content h3 { margin-bottom: 16px; }
 .reviews { padding: 20px; background: #fff; border-radius: 12px; }
 .review-item { padding: 16px 0; border-bottom: 1px solid #f0f0f0; }
-.review-header { display: flex; justify-content: space-between; align-items: center; }
+.review-user-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.review-avatar { flex-shrink: 0; }
+.avatar-placeholder { font-size: 14px; color: #fff; }
+.review-username { font-weight: 500; color: #333; font-size: 14px; }
+.review-meta { display: flex; align-items: center; gap: 16px; margin-bottom: 8px; }
 .review-time { color: #999; font-size: 13px; }
 .review-content { margin-top: 8px; color: #333; }
+.review-images { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+.review-image { width: 80px; height: 80px; border-radius: 6px; overflow: hidden; }
+.review-image :deep(img) { object-fit: cover; }
 </style>
