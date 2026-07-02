@@ -17,7 +17,7 @@
           <div class="chat-messages">
             <!-- 欢迎卡片 -->
             <div class="welcome-card" v-if="messages.length <= 1">
-              <div class="welcome-icon">🐶</div>
+              <div class="welcome-icon">(∠・ω < )⌒★</div>
               <div class="welcome-text">你好！我是 PetShop 的智能客服</div>
               <div class="welcome-desc">试试问我这些问题吧 👇</div>
             </div>
@@ -154,7 +154,7 @@ async function scrollToBottom() {
   text-align: center;
   padding: 40px 20px 20px;
 }
-.welcome-icon { font-size: 56px; margin-bottom: 12px; }
+.welcome-icon { margin-bottom: 07px;font-size: 21px;  }
 .welcome-text { font-size: 16px; font-weight: 600; color: #333; margin-bottom: 6px; }
 .welcome-desc { font-size: 13px; color: #999; }
 

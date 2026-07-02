@@ -15,7 +15,7 @@
       <view class="chat-messages">
         <!-- 欢迎卡片 -->
         <view class="welcome-card" v-if="messages.length <= 1">
-          <text class="welcome-icon">🐶</text>
+          <text class="welcome-icon">(∠・ω < )⌒★</text>
           <text class="welcome-text">你好！我是 PetShop 的智能客服</text>
           <text class="welcome-desc">试试问我这些问题吧 👇</text>
         </view>
