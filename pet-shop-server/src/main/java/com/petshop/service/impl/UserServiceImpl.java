@@ -13,14 +13,10 @@ import com.petshop.mapper.UserMapper;
 import com.petshop.service.UserService;
 import com.petshop.util.CaptchaUtil;
 import com.petshop.vo.UserAdminVO;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -34,11 +30,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     private final OrderMapper orderMapper;
 
-    @Autowired
-    private RedisTemplate<String, Object> redisTemplate;
-
-    private static final String TOKEN_PREFIX = "token:";
-    private static final Duration TOKEN_EXPIRE = Duration.ofHours(24);
 
     public UserServiceImpl(OrderMapper orderMapper) {
         this.orderMapper = orderMapper;
@@ -86,14 +77,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             throw new RuntimeException("用户名或密码错误");
         }
 
-        // 生成 token，存储到 Redis（24 小时过期）
-        String token = "token-" + UUID.randomUUID();
-        Map<String, Object> tokenData = new HashMap<>();
-        tokenData.put("userId", user.getId());
-        tokenData.put("nickname", user.getNickname());
-        tokenData.put("role", user.getRole());
-        redisTemplate.opsForValue().set(TOKEN_PREFIX + token, tokenData, TOKEN_EXPIRE);
-        return token;
+        // TODO: 生成JWT Token
+        return "token-" + UUID.randomUUID();
     }
 
     @Override
@@ -183,11 +168,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         }
 
         String token = "token-" + UUID.randomUUID();
-        Map<String, Object> tokenData = new HashMap<>();
-        tokenData.put("userId", user.getId());
-        tokenData.put("nickname", user.getNickname());
-        tokenData.put("role", user.getRole());
-        redisTemplate.opsForValue().set(TOKEN_PREFIX + token, tokenData, TOKEN_EXPIRE);
         return Map.of(
                 "token", token,
                 "userId", user.getId(),
@@ -304,19 +284,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         }
 
         save(user);
-    }
-
-    @Override
-    @SuppressWarnings("unchecked")
-    public Map<String, Object> getTokenInfo(String token) {
-        try {
-            Object data = redisTemplate.opsForValue().get(TOKEN_PREFIX + token);
-            if (data instanceof Map) {
-                return (Map<String, Object>) data;
-            }
-        } catch (Exception ignored) {
-        }
-        return null;
     }
 
     @Override

@@ -6,7 +6,6 @@ import com.petshop.dto.UserAdminDto;
 import com.petshop.entity.User;
 import com.petshop.vo.UserAdminVO;
 
-import java.util.Map;
 
 /**
  * 用户服务
@@ -54,6 +53,4 @@ public interface UserService extends IService<User> {
     /** 管理端新建管理员账号 */
     void adminCreateUser(User user);
 
-    /** 查询 token 信息（Redis），token 无效返回 null */
-    Map<String, Object> getTokenInfo(String token);
 }
