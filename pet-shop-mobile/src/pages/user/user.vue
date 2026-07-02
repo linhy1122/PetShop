@@ -2,14 +2,17 @@
   <view class="user-page">
     <!-- 用户头部 -->
     <view class="user-header" v-if="userStore.isLoggedIn()">
-      <image src="https://picsum.photos/seed/avatar/200/200" mode="aspectFill" class="avatar" />
+      <button class="avatar-btn" open-type="chooseAvatar" @chooseavatar="onChooseAvatar">
+        <image :src="avatarUrl" mode="aspectFill" class="avatar"
+               @error="localAvatar = ''" />
+      </button>
       <view class="user-info">
         <text class="nickname">{{ userStore.userInfo?.nickname || '用户' }}</text>
         <text class="user-id">ID: {{ userStore.userInfo?.userId }}</text>
       </view>
     </view>
     <view class="user-header not-login" v-else @click="goLogin">
-      <image src="https://picsum.photos/seed/avatar/200/200" mode="aspectFill" class="avatar" />
+      <image :src="avatarUrl" mode="aspectFill" class="avatar" />
       <view class="user-info">
         <text class="nickname">点击登录</text>
         <text class="user-id">登录后享受更多服务</text>
@@ -211,13 +214,19 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, computed } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { useUserStore } from '@/stores/user'
 import { updateProfileApi, updatePasswordApi } from '@/api/user'
 import request from '@/utils/request'
 
 const userStore = useUserStore()
+
+// 头像：优先本地路径 → 服务器路径 → 默认图
+const localAvatar = ref('')
+const avatarUrl = computed(() =>
+  localAvatar.value || uni.fixImgUrl(userStore.userInfo?.avatar) || 'https://picsum.photos/seed/avatar/200/200'
+)
 
 const addresses = ref([])
 const profileVisible = ref(false)
@@ -317,6 +326,39 @@ async function deleteAddr(id) {
   }
 }
 
+async function onChooseAvatar(e) {
+  const tempPath = e.detail.avatarUrl
+  if (!tempPath) return
+
+  // 先立即显示本地头像（微信临时路径可直接使用）
+  localAvatar.value = tempPath
+
+  const uploadUrl = request.baseURL + '/file/upload'
+  uni.showLoading({ title: '上传中...' })
+  try {
+    const uploadRes = await uni.uploadFile({
+      url: uploadUrl,
+      filePath: tempPath,
+      name: 'file',
+      header: { 'Authorization': 'Bearer ' + userStore.token }
+    })
+    const data = JSON.parse(uploadRes.data)
+    if (data.code === 200) {
+      await updateProfileApi({ id: userStore.userInfo.userId, avatar: data.data })
+      userStore.setAvatar(data.data)
+      uni.showToast({ title: '头像更新成功', icon: 'success' })
+    } else {
+      localAvatar.value = '' // 上传失败，清除本地头像
+      uni.showToast({ title: data.message || '上传失败', icon: 'none' })
+    }
+  } catch (err) {
+    localAvatar.value = '' // 上传失败，清除本地头像
+    uni.showToast({ title: err.message || '头像上传失败', icon: 'none' })
+  } finally {
+    uni.hideLoading()
+  }
+}
+
 function goLogin() {
   uni.navigateTo({ url: '/pages/login/login' })
 }
@@ -363,6 +405,17 @@ function handleLogout() {
 .user-header.not-login {
   cursor: pointer;
 }
+
+.avatar-btn {
+  width: 120rpx;
+  height: 120rpx;
+  padding: 0;
+  margin: 0;
+  border: none;
+  background: transparent;
+  line-height: 1;
+}
+.avatar-btn::after { border: none; }
 
 .avatar {
   width: 120rpx;
