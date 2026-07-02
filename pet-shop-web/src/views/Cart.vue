@@ -13,10 +13,13 @@
             <el-checkbox v-model="item.checked" :true-value="1" :false-value="0"
                          :disabled="item.productStatus === 0"
                          @change="handleCheck(item)" />
-            <img :src="item.productImage || '/vite.svg'" class="item-img" />
+            <img :src="item.productImage || '/vite.svg'" class="item-img"
+                 @click="$router.push('/product/' + item.productId)" />
             <div class="item-info">
               <h4>
-                {{ item.productName }}
+                <span class="product-name-link" @click="$router.push('/product/' + item.productId)">
+                  {{ item.productName }}
+                </span>
                 <el-tag v-if="item.productStatus === 0" type="danger" size="small">已下架</el-tag>
                 <el-tag v-else-if="item.productType === 1" type="warning" size="small">宠物</el-tag>
               </h4>
@@ -85,7 +88,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { useCartStore } from '@/stores/cart'
-import { getCartApi, updateCartCheckApi, updateCartQuantityApi, removeCartItemApi, batchRemoveCartApi, clearOfflineCartApi } from '@/api/cart'
+import { getCartApi, updateCartCheckApi, updateCartQuantityApi, removeCartItemApi, batchRemoveCartApi, clearOfflineCartApi, checkAllCartApi } from '@/api/cart'
 import { createOrderApi } from '@/api/order'
 import request from '@/utils/request'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -160,12 +163,9 @@ async function handleCheck(item) {
 }
 
 async function handleCheckAll(val) {
-  const promises = cartItems.value
-    .filter(i => i.productStatus !== 0)
-    .map(i => updateCartCheckApi(i.id, val ? 1 : 0))
-  await Promise.all(promises)
-  cartStore.fetchCart(userStore.userInfo.userId)
+  await checkAllCartApi(userStore.userInfo.userId, val ? 1 : 0)
   await loadCart()
+  cartStore.fetchCart(userStore.userInfo.userId)
 }
 
 async function handleRemove(item) {
@@ -234,7 +234,9 @@ async function submitOrder() {
 h2 { margin-bottom: 20px; }
 .cart-item { margin-bottom: 12px; }
 .item-row { display: flex; align-items: center; gap: 16px; }
-.item-img { width: 80px; height: 80px; object-fit: cover; border-radius: 8px; }
+.item-img { width: 80px; height: 80px; object-fit: cover; border-radius: 8px; cursor: pointer; }
+.product-name-link { cursor: pointer; }
+.product-name-link:hover { color: #409eff; }
 .item-info { flex: 1; }
 .item-info h4 { font-size: 15px; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
 .item-price { color: #f56c6c; font-weight: bold; }
