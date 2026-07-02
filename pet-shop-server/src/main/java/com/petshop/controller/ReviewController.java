@@ -116,9 +116,87 @@ public class ReviewController {
                 review.setImages(images);
                 reviewService.save(review);
             }
-            orderService.completeOrder(orderId);
+            // 仅当订单状态为3（待评价）时才完成订单
+            com.petshop.entity.Order order = orderService.getById(orderId);
+            if (order != null && order.getStatus() == 3) {
+                orderService.completeOrder(orderId);
+            }
         }
 
+        return Result.ok();
+    }
+
+    /** 获取用户在指定订单下的评价（含商品名称） */
+    @GetMapping("/order/{orderId}")
+    public Result<List<Review>> listByOrder(@PathVariable Long orderId,
+                                             @RequestParam Long userId) {
+        LambdaQueryWrapper<Review> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(Review::getOrderId, orderId)
+               .eq(Review::getUserId, userId)
+               .orderByDesc(Review::getCreateTime);
+        List<Review> reviews = reviewService.list(wrapper);
+
+        // 填充商品名称
+        if (!reviews.isEmpty()) {
+            List<OrderItem> items = orderItemService.getByOrderId(orderId);
+            Map<Long, String> nameMap = items.stream()
+                    .collect(Collectors.toMap(OrderItem::getProductId,
+                            OrderItem::getProductName, (a, b) -> a));
+            reviews.forEach(r -> r.setProductName(nameMap.getOrDefault(r.getProductId(), "未知商品")));
+        }
+
+        return Result.ok(reviews);
+    }
+
+    /** 修改评价（批量更新该订单下该用户的所有评价记录） */
+    @PutMapping("/order/{orderId}")
+    @Transactional
+    public Result<?> updateByOrder(@PathVariable Long orderId,
+                                    @RequestBody Map<String, Object> body) {
+        Long userId = Long.valueOf(body.get("userId").toString());
+        Integer rating = body.get("rating") != null ? Integer.valueOf(body.get("rating").toString()) : 5;
+        String content = body.get("content") != null ? body.get("content").toString() : "";
+        String images = body.get("images") != null ? body.get("images").toString() : "[]";
+
+        LambdaQueryWrapper<Review> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(Review::getOrderId, orderId)
+               .eq(Review::getUserId, userId);
+        List<Review> reviews = reviewService.list(wrapper);
+        if (reviews.isEmpty()) {
+            return Result.error("未找到评价记录");
+        }
+        for (Review r : reviews) {
+            r.setRating(rating);
+            r.setContent(content);
+            r.setImages(images);
+            reviewService.updateById(r);
+        }
+        return Result.ok();
+    }
+
+    /** 修改单条评价 */
+    @PutMapping("/{reviewId}")
+    @Transactional
+    public Result<?> updateOne(@PathVariable Long reviewId,
+                                @RequestBody Map<String, Object> body) {
+        Review review = reviewService.getById(reviewId);
+        if (review == null) {
+            return Result.error("评价不存在");
+        }
+        Long userId = Long.valueOf(body.get("userId").toString());
+        if (!review.getUserId().equals(userId)) {
+            return Result.error("无权修改他人评价");
+        }
+        if (body.get("rating") != null) {
+            review.setRating(Integer.valueOf(body.get("rating").toString()));
+        }
+        if (body.get("content") != null) {
+            review.setContent(body.get("content").toString());
+        }
+        if (body.get("images") != null) {
+            review.setImages(body.get("images").toString());
+        }
+        reviewService.updateById(review);
         return Result.ok();
     }
 

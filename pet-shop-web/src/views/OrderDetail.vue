@@ -61,7 +61,39 @@
           <el-button v-if="order.status === 0" @click="handleCancel">取消订单</el-button>
           <el-button v-if="order.status === 2" type="success" @click="handleReceive">确认收货</el-button>
           <el-button v-if="[2,3].includes(order.status)" type="warning" @click="handleRefund">申请退单</el-button>
-          <el-button v-if="order.status === 3" type="primary" @click="showReviewDialog = true">填写评价</el-button>
+          <el-button v-if="order.status === 3" type="primary" @click="openCreateReview">填写评价</el-button>
+        </div>
+      </el-card>
+
+      <!-- 我的评价（已完成订单） -->
+      <el-card v-if="order && order.status === 4" class="section">
+        <template #header>
+          <div class="my-review-title">
+            <span>我的评价（{{ orderReviews.length }}条）</span>
+            <el-button type="primary" size="small" @click="openCreateReview">新增评论</el-button>
+          </div>
+        </template>
+        <el-empty v-if="orderReviews.length === 0" description="暂无评价" />
+        <div v-for="r in orderReviews" :key="r.id" class="my-review-item">
+          <div class="my-review-item-header">
+            <span class="review-product-name">{{ r.productName || '商品' }}</span>
+            <div class="my-review-actions">
+              <el-button type="warning" size="small" text @click="openEditReview(r)">修改</el-button>
+              <el-button type="danger" size="small" text @click="handleDeleteSingleReview(r)">删除</el-button>
+            </div>
+          </div>
+          <el-rate :model-value="r.rating" disabled show-score style="margin-bottom: 6px;" />
+          <p class="my-review-text">{{ r.content }}</p>
+          <div class="review-images" v-if="getReviewImages(r).length > 0">
+            <el-image
+              v-for="(url, i) in getReviewImages(r)"
+              :key="i"
+              :src="url"
+              :preview-src-list="getReviewImages(r)"
+              fit="cover"
+              class="review-image"
+            />
+          </div>
         </div>
       </el-card>
 
@@ -81,8 +113,8 @@
         </el-timeline>
       </el-card>
 
-      <!-- 填写评价弹窗 -->
-      <el-dialog v-model="showReviewDialog" title="填写评价" width="550px" :close-on-click-modal="false">
+      <!-- 填写/修改评价弹窗 -->
+      <el-dialog v-model="showReviewDialog" :title="reviewMode === 'edit' ? '修改评价' : '填写评价'" width="550px" :close-on-click-modal="false">
         <div class="review-form">
           <div class="review-label">评分</div>
           <el-rate v-model="reviewForm.rating" show-score style="margin-bottom: 16px;" />
@@ -114,7 +146,9 @@
         </div>
         <template #footer>
           <el-button @click="showReviewDialog = false">取消</el-button>
-          <el-button type="primary" :loading="reviewSubmitting" @click="handleSubmitReview">提交评价</el-button>
+          <el-button type="primary" :loading="reviewSubmitting" @click="handleSubmitReview">
+            {{ reviewMode === 'edit' ? '保存修改' : '提交评价' }}
+          </el-button>
         </template>
       </el-dialog>
     </div>
@@ -126,7 +160,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { getOrderDetailApi, payOrderApi, cancelOrderApi, confirmReceiveApi, applyRefundApi } from '@/api/order'
-import { submitReviewApi } from '@/api/review'
+import { submitReviewApi, getOrderReviewsApi, updateOneReviewApi, deleteReviewApi } from '@/api/review'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
 
@@ -142,6 +176,9 @@ const loading = ref(false)
 // 评价弹窗
 const showReviewDialog = ref(false)
 const reviewSubmitting = ref(false)
+const reviewMode = ref('create') // 'create' | 'edit'
+const editingReviewId = ref(null) // 正在编辑的评价ID
+const orderReviews = ref([])
 const reviewForm = reactive({
   rating: 5,
   content: '',
@@ -177,6 +214,13 @@ onMounted(async () => {
     order.value = res.data?.order
     items.value = res.data?.items || []
     logs.value = res.data?.logs || []
+    // 已完成订单：获取用户评价
+    if (order.value && order.value.status === 4) {
+      try {
+        const rRes = await getOrderReviewsApi(order.value.id, userStore.userInfo.userId)
+        orderReviews.value = rRes.data || []
+      } catch (e) { orderReviews.value = [] }
+    }
   } catch (e) {
     ElMessage.error('加载订单失败')
   } finally {
@@ -220,6 +264,45 @@ async function handleRefund() {
 }
 
 // 评价相关
+function getReviewImages(review) {
+  try {
+    const imgs = JSON.parse(review.images || '[]')
+    return Array.isArray(imgs) ? imgs.filter(u => u) : []
+  } catch {
+    return []
+  }
+}
+
+function resetReviewForm() {
+  reviewForm.rating = 5
+  reviewForm.content = ''
+  reviewForm.fileList = []
+  reviewForm.uploadedImages = []
+}
+
+function openCreateReview() {
+  reviewMode.value = 'create'
+  editingReviewId.value = null
+  resetReviewForm()
+  showReviewDialog.value = true
+}
+
+function openEditReview(review) {
+  reviewMode.value = 'edit'
+  editingReviewId.value = review.id
+  reviewForm.rating = review.rating || 5
+  reviewForm.content = review.content || ''
+  reviewForm.uploadedImages = []
+  reviewForm.fileList = []
+  // 将已有图片回显到上传列表
+  const imgs = getReviewImages(review)
+  imgs.forEach((url, i) => {
+    reviewForm.uploadedImages.push(url)
+    reviewForm.fileList.push({ name: `img_${i}`, url })
+  })
+  showReviewDialog.value = true
+}
+
 function beforeUpload(file) {
   const isImage = file.type.startsWith('image/')
   if (!isImage) {
@@ -257,21 +340,43 @@ async function handleSubmitReview() {
   }
   reviewSubmitting.value = true
   try {
-    await submitReviewApi({
-      orderId: order.value.id,
-      userId: userStore.userInfo.userId,
-      rating: reviewForm.rating,
-      content: reviewForm.content,
-      images: JSON.stringify(reviewForm.uploadedImages)
-    })
-    ElMessage.success('评价提交成功')
+    if (reviewMode.value === 'edit' && editingReviewId.value) {
+      // 修改单条评价
+      await updateOneReviewApi(editingReviewId.value, {
+        userId: userStore.userInfo.userId,
+        rating: reviewForm.rating,
+        content: reviewForm.content,
+        images: JSON.stringify(reviewForm.uploadedImages)
+      })
+      ElMessage.success('评价修改成功')
+    } else {
+      // 新增评论（对订单中每个商品各生成一条）
+      await submitReviewApi({
+        orderId: order.value.id,
+        userId: userStore.userInfo.userId,
+        rating: reviewForm.rating,
+        content: reviewForm.content,
+        images: JSON.stringify(reviewForm.uploadedImages)
+      })
+      ElMessage.success('评论已发布')
+    }
     showReviewDialog.value = false
-    await router.push('/order/list')
+    location.reload()
   } catch (e) {
-    ElMessage.error(e.message || '评价提交失败')
+    ElMessage.error(e.message || '操作失败')
   } finally {
     reviewSubmitting.value = false
   }
+}
+
+// 删除单条评价
+async function handleDeleteSingleReview(review) {
+  try {
+    await ElMessageBox.confirm('确定要删除这条评价吗？', '删除确认', { type: 'warning' })
+    await deleteReviewApi(review.id, userStore.userInfo.userId, 'user')
+    ElMessage.success('评价已删除')
+    location.reload()
+  } catch (e) { /* 取消 */ }
 }
 </script>
 
@@ -292,4 +397,14 @@ async function handleSubmitReview() {
 .order-actions { display: flex; gap: 10px; }
 .log-operator { color: #999; font-size: 12px; margin-top: 4px; }
 .review-label { font-weight: 500; margin-bottom: 8px; color: #333; }
+.my-review-title { display: flex; justify-content: space-between; align-items: center; }
+.my-review-item { padding: 14px 0; border-bottom: 1px solid #f0f0f0; }
+.my-review-item:last-child { border-bottom: none; }
+.my-review-item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.review-product-name { font-weight: 600; color: #409eff; font-size: 14px; }
+.my-review-actions { display: flex; gap: 4px; }
+.my-review-text { color: #333; line-height: 1.6; margin-top: 4px; }
+.review-images { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+.review-image { width: 80px; height: 80px; border-radius: 6px; overflow: hidden; }
+.review-image :deep(img) { object-fit: cover; }
 </style>

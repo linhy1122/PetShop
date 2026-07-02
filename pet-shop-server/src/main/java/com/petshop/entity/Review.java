@@ -36,4 +36,8 @@ public class Review extends BaseEntity {
     /** 评价用户头像（非数据库字段，查询时填充） */
     @TableField(exist = false)
     private String avatar;
+
+    /** 商品名称（非数据库字段，查询时填充） */
+    @TableField(exist = false)
+    private String productName;
 }
