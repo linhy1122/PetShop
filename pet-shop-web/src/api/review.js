@@ -9,3 +9,8 @@ export function submitReviewApi(data) {
 export function getProductReviewsApi(productId, params) {
   return request.get(`/review/product/${productId}`, { params })
 }
+
+/** 删除评价 */
+export function deleteReviewApi(reviewId, userId, role = 'user') {
+  return request.delete(`/review/${reviewId}`, { params: { userId, role } })
+}

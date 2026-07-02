@@ -121,4 +121,21 @@ public class ReviewController {
 
         return Result.ok();
     }
+
+    /** 删除评价（用户删自己，管理员删任意） */
+    @DeleteMapping("/{reviewId}")
+    public Result<?> delete(@PathVariable Long reviewId,
+                            @RequestParam Long userId,
+                            @RequestParam(defaultValue = "user") String role) {
+        Review review = reviewService.getById(reviewId);
+        if (review == null) {
+            return Result.error("评价不存在");
+        }
+        // 非管理员只能删除自己的评价
+        if (!"admin".equals(role) && !review.getUserId().equals(userId)) {
+            return Result.error("无权删除他人评价");
+        }
+        reviewService.removeById(reviewId);
+        return Result.ok();
+    }
 }

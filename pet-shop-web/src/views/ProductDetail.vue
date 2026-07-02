@@ -62,6 +62,13 @@
           <div class="review-meta">
             <el-rate :model-value="r.rating" disabled show-score />
             <span class="review-time">{{ formatDate(r.createTime) }}</span>
+            <el-button
+              v-if="canDelete(r)"
+              type="danger"
+              size="small"
+              text
+              @click="handleDeleteReview(r)"
+            >删除</el-button>
           </div>
           <p class="review-content">{{ r.content }}</p>
           <div class="review-images" v-if="getReviewImages(r).length > 0">
@@ -122,10 +129,10 @@ import { ref, reactive, computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getProductDetailApi } from '@/api/product'
 import { addToCartApi } from '@/api/cart'
-import { submitReviewApi } from '@/api/review'
+import { submitReviewApi, deleteReviewApi } from '@/api/review'
 import { useUserStore } from '@/stores/user'
 import request from '@/utils/request'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
 
 const route = useRoute()
@@ -256,6 +263,24 @@ function onUploadRemove(file) {
   const url = file.response?.data || file.url
   const idx = reviewForm.uploadedImages.indexOf(url)
   if (idx > -1) reviewForm.uploadedImages.splice(idx, 1)
+}
+
+// 判断当前用户能否删除该评价（自己的评价或管理员）
+function canDelete(review) {
+  if (!userStore.isLoggedIn()) return false
+  if (userStore.isAdmin()) return true
+  return review.userId === userStore.userInfo?.userId
+}
+
+async function handleDeleteReview(review) {
+  try {
+    await ElMessageBox.confirm('确定要删除这条评价吗？', '删除确认', { type: 'warning' })
+    await deleteReviewApi(review.id, userStore.userInfo.userId, userStore.isAdmin() ? 'admin' : 'user')
+    ElMessage.success('评价已删除')
+    // 刷新评价列表
+    const res = await request.get(`/review/product/${product.value.id}`, { params: { size: 10 } })
+    reviews.value = res.data?.records || []
+  } catch (e) { /* 取消或失败 */ }
 }
 
 async function handleSubmitReview() {
