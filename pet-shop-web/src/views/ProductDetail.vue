@@ -47,7 +47,10 @@
 
       <!-- 评价列表 -->
       <div class="reviews">
-        <h3>商品评价</h3>
+        <div class="reviews-header">
+          <h3>商品评价</h3>
+          <el-button type="primary" size="small" @click="openReviewDialog">填写评价</el-button>
+        </div>
         <el-empty v-if="reviews.length === 0" description="暂无评价" />
         <div v-for="r in reviews" :key="r.id" class="review-item">
           <div class="review-user-row">
@@ -73,18 +76,57 @@
           </div>
         </div>
       </div>
+
+      <!-- 填写评价弹窗 -->
+      <el-dialog v-model="showReviewDialog" title="填写评价" width="550px" :close-on-click-modal="false">
+        <div class="review-form">
+          <div class="review-label">评分</div>
+          <el-rate v-model="reviewForm.rating" show-score style="margin-bottom: 16px;" />
+
+          <div class="review-label">评价内容</div>
+          <el-input
+            v-model="reviewForm.content"
+            type="textarea"
+            :rows="4"
+            placeholder="请分享您的购物体验..."
+            maxlength="500"
+            show-word-limit
+          />
+
+          <div class="review-label" style="margin-top: 16px;">上传图片（最多9张）</div>
+          <el-upload
+            v-model:file-list="reviewForm.fileList"
+            :action="uploadUrl"
+            :headers="uploadHeaders"
+            list-type="picture-card"
+            :limit="9"
+            :on-success="onUploadSuccess"
+            :on-remove="onUploadRemove"
+            :before-upload="beforeUpload"
+            accept="image/*"
+          >
+            <el-icon><Plus /></el-icon>
+          </el-upload>
+        </div>
+        <template #footer>
+          <el-button @click="showReviewDialog = false">取消</el-button>
+          <el-button type="primary" :loading="reviewSubmitting" @click="handleSubmitReview">提交评价</el-button>
+        </template>
+      </el-dialog>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, reactive, computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getProductDetailApi } from '@/api/product'
 import { addToCartApi } from '@/api/cart'
+import { submitReviewApi } from '@/api/review'
 import { useUserStore } from '@/stores/user'
 import request from '@/utils/request'
 import { ElMessage } from 'element-plus'
+import { Plus } from '@element-plus/icons-vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -94,6 +136,21 @@ const product = ref(null)
 const reviews = ref([])
 const quantity = ref(1)
 const loading = ref(false)
+
+// 评价弹窗
+const showReviewDialog = ref(false)
+const reviewSubmitting = ref(false)
+const reviewForm = reactive({
+  rating: 5,
+  content: '',
+  fileList: [],
+  uploadedImages: []
+})
+
+const uploadUrl = '/api/file/upload'
+const uploadHeaders = {
+  Authorization: `Bearer ${localStorage.getItem('token') || ''}`
+}
 
 // 图集：合并主图 + 额外图片
 const allImages = computed(() => {
@@ -159,6 +216,74 @@ function buyNow() {
   addToCart()
   router.push('/cart')
 }
+
+// 评价相关
+function openReviewDialog() {
+  if (!userStore.isLoggedIn()) {
+    router.push('/login')
+    return
+  }
+  reviewForm.rating = 5
+  reviewForm.content = ''
+  reviewForm.fileList = []
+  reviewForm.uploadedImages = []
+  showReviewDialog.value = true
+}
+
+function beforeUpload(file) {
+  const isImage = file.type.startsWith('image/')
+  if (!isImage) {
+    ElMessage.error('只能上传图片文件')
+    return false
+  }
+  const isLt5M = file.size / 1024 / 1024 < 5
+  if (!isLt5M) {
+    ElMessage.error('图片大小不能超过 5MB')
+    return false
+  }
+  return true
+}
+
+function onUploadSuccess(response) {
+  if (response.code === 200 && response.data) {
+    reviewForm.uploadedImages.push(response.data)
+  } else {
+    ElMessage.error('图片上传失败')
+  }
+}
+
+function onUploadRemove(file) {
+  const url = file.response?.data || file.url
+  const idx = reviewForm.uploadedImages.indexOf(url)
+  if (idx > -1) reviewForm.uploadedImages.splice(idx, 1)
+}
+
+async function handleSubmitReview() {
+  if (!reviewForm.content.trim()) {
+    ElMessage.warning('请输入评价内容')
+    return
+  }
+  reviewSubmitting.value = true
+  try {
+    await submitReviewApi({
+      productId: product.value.id,
+      orderId: 0,
+      userId: userStore.userInfo.userId,
+      rating: reviewForm.rating,
+      content: reviewForm.content,
+      images: JSON.stringify(reviewForm.uploadedImages)
+    })
+    ElMessage.success('评价提交成功')
+    showReviewDialog.value = false
+    // 刷新评价列表
+    const res = await request.get(`/review/product/${product.value.id}`, { params: { size: 10 } })
+    reviews.value = res.data?.records || []
+  } catch (e) {
+    ElMessage.error(e.message || '评价提交失败')
+  } finally {
+    reviewSubmitting.value = false
+  }
+}
 </script>
 
 <style scoped>
@@ -206,6 +331,8 @@ function buyNow() {
 .detail-content { margin: 40px 0; padding: 20px; background: #fff; border-radius: 12px; }
 .detail-content h3 { margin-bottom: 16px; }
 .reviews { padding: 20px; background: #fff; border-radius: 12px; }
+.reviews-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.reviews-header h3 { margin: 0; }
 .review-item { padding: 16px 0; border-bottom: 1px solid #f0f0f0; }
 .review-user-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
 .review-avatar { flex-shrink: 0; }
@@ -217,4 +344,5 @@ function buyNow() {
 .review-images { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
 .review-image { width: 80px; height: 80px; border-radius: 6px; overflow: hidden; }
 .review-image :deep(img) { object-fit: cover; }
+.review-label { font-weight: 500; margin-bottom: 8px; color: #333; }
 </style>
