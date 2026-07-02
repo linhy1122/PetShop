@@ -34,3 +34,8 @@ export function batchRemoveCartApi(ids) {
 export function clearOfflineCartApi(userId) {
   return request.delete('/cart/clear-offline', { params: { userId } })
 }
+
+/** 全选/全不选（跳过已下架） */
+export function checkAllCartApi(userId, checked) {
+  return request.put('/cart/check-all', null, { params: { userId, checked } })
+}
