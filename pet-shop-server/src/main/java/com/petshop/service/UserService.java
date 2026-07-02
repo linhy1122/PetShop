@@ -33,6 +33,9 @@ public interface UserService extends IService<User> {
     /** GitHub OAuth登录（自动注册），返回 token + 用户信息 */
     java.util.Map<String, Object> loginByGithub(Long githubId, String githubUsername, String avatarUrl, String email);
 
+    /** 微信小程序登录（自动注册），返回 token + 用户信息 */
+    java.util.Map<String, Object> loginByWechat(String code);
+
     /** 管理端分页查询用户 */
     Page<UserAdminVO> pageAdminUsers(Integer page, Integer size, String username,
                                      String nickname, String phone, Integer status,

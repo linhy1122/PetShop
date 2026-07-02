@@ -33,5 +33,6 @@ public class User extends BaseEntity {
     private Integer status;
     /** GitHub用户ID（OAuth登录绑定） */
     private Long githubId;
-
+    /** 微信小程序openid */
+    private String openid;
 }

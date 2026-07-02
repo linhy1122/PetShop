@@ -36,9 +36,11 @@
       <!-- #endif -->
       <!-- #ifndef H5 -->
       <view class="oauth-divider">
-        <text>提示</text>
+        <text>快捷登录</text>
       </view>
-      <text class="oauth-hint">小程序端暂不支持第三方登录，请使用用户名密码登录</text>
+      <button class="wechat-btn" :loading="wxLoading" @click="handleWxLogin">
+        <text>微信一键登录</text>
+      </button>
       <!-- #endif -->
 
       <view class="register-link">
@@ -56,6 +58,7 @@ import SliderCaptcha from '@/components/SliderCaptcha.vue'
 const userStore = useUserStore()
 const captchaRef = ref(null)
 const loading = ref(false)
+const wxLoading = ref(false)
 const captchaVerified = ref(false)
 const captchaData = ref({ captchaKey: '', captchaX: 0 })
 
@@ -86,6 +89,19 @@ async function handleLogin() {
     captchaVerified.value = false
   } finally {
     loading.value = false
+  }
+}
+
+async function handleWxLogin() {
+  wxLoading.value = true
+  try {
+    await userStore.wxLogin()
+    uni.showToast({ title: '登录成功', icon: 'success' })
+    setTimeout(() => uni.switchTab({ url: '/pages/index/index' }), 1000)
+  } catch (e) {
+    uni.showToast({ title: e.message || '微信登录失败', icon: 'none' })
+  } finally {
+    wxLoading.value = false
   }
 }
 
@@ -177,6 +193,16 @@ function goRegister() {
 .github-btn {
   width: 100%;
   background: #24292e;
+  color: #fff;
+  border: none;
+  padding: 24rpx;
+  border-radius: 40rpx;
+  font-size: 28rpx;
+}
+
+.wechat-btn {
+  width: 100%;
+  background: #07C160;
   color: #fff;
   border: none;
   padding: 24rpx;

@@ -64,6 +64,12 @@ ai:
   api-key: sk-ws-H.RPPLIEI.3QlU.MEUCIQDxFtqpcCdGapmg85C3lLNN6OWImZinv_FeEruI5vj6vAIgK4vUs7Kxj0QHZ8isjg2xKBhJGapKGd-oXJlwp4kzeKA
   api-url: https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation
 
+# 微信小程序配置
+wechat:
+  mini-program:
+    app-id: wx304285f701d90179
+    app-secret: 552d5c84afb69c13a939d6e1dce86790
+
 # GitHub OAuth 配置
 github:
   oauth:
