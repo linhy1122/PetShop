@@ -29,7 +29,8 @@ public class ProductController {
                                        @RequestParam(required = false) Long storeId,
                                        @RequestParam(required = false) Integer productType,
                                        @RequestParam(required = false) Integer status,
-                                       @RequestParam(required = false) String keyword) {
+                                       @RequestParam(required = false) String keyword,
+                                       @RequestParam(required = false) String sortBy) {
         LambdaQueryWrapper<Product> wrapper = new LambdaQueryWrapper<>();
         if (status != null) {
             wrapper.eq(Product::getStatus, status);
@@ -48,7 +49,15 @@ public class ProductController {
         if (keyword != null && !keyword.isEmpty()) {
             wrapper.like(Product::getName, keyword);
         }
-        wrapper.orderByDesc(Product::getSales);
+        // 排序：综合(默认)=销量降序, price_asc=价格升序, price_desc=价格降序, sales=销量降序
+        if ("price_asc".equals(sortBy)) {
+            wrapper.orderByAsc(Product::getPrice);
+        } else if ("price_desc".equals(sortBy)) {
+            wrapper.orderByDesc(Product::getPrice);
+        } else {
+            // 默认综合排序：按销量降序
+            wrapper.orderByDesc(Product::getSales);
+        }
         Page<Product> result = productService.page(new Page<>(page, size), wrapper);
         return Result.ok(result);
     }
