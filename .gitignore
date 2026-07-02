@@ -31,3 +31,4 @@ Thumbs.db
 *.env
 application-local.yml
 
+pet-shop-server/src/main/resources/application.yml

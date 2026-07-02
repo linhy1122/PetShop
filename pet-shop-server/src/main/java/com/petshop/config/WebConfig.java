@@ -36,6 +36,7 @@ public class WebConfig implements WebMvcConfigurer {
         log.info("静态资源映射: /uploads/** → {}", resourceLocation);
     }
 
+
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         registry.addResourceHandler("/uploads/**")

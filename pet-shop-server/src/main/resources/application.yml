@@ -1,5 +1,6 @@
 server:
-  port: 8080
+  address: 0.0.0.0
+  port: 9090
 
 spring:
   application:
@@ -12,7 +13,7 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/petshop?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
     username: root
-    password: fanzican050417
+    password: 123456
 
   # Redis
   redis:
@@ -68,7 +69,7 @@ github:
   oauth:
     client-id: Ov23li359yoc6iYGcVwW
     client-secret: 59bf325d4173b90fc8d5f855b144cdad1d35d680
-    redirect-uri: http://localhost:8080/oauth/github/callback
+    redirect-uri: http://localhost:9090/oauth/github/callback
 
 # 自定义配置
 pet-shop:
