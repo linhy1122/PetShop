@@ -15,7 +15,6 @@
       <view class="chat-messages">
         <!-- 欢迎卡片 -->
         <view class="welcome-card" v-if="messages.length <= 1">
-          <text class="welcome-icon">(∠・ω < )⌒★</text>
           <text class="welcome-text">你好！我是 PetShop 的智能客服</text>
           <text class="welcome-desc">试试问我这些问题吧 👇</text>
         </view>
@@ -75,9 +74,9 @@ const loading = ref(false)
 const scrollTop = ref(0)
 
 const quickQuestions = [
-  '🐕 有哪些狗狗？',
-  '🛒 热门推荐',
-  '📍 店铺在哪？',
+  '🐕 有哪些在售的狗狗？',
+  '🛒 热门商品推荐',
+  '📍 店铺在哪里？',
   '🐱 猫咪怎么选？'
 ]
 
@@ -141,10 +140,9 @@ async function scrollToBottom() {
 /* 欢迎卡片 */
 .welcome-card {
   text-align: center;
-  padding: 80rpx 40rpx 40rpx;
+  padding: 60rpx 40rpx 40rpx;
   display: flex; flex-direction: column; align-items: center;
 }
-.welcome-icon { font-size: 100rpx; margin-bottom: 20rpx; }
 .welcome-text { font-size: 32rpx; font-weight: 600; color: #333; margin-bottom: 8rpx; }
 .welcome-desc { font-size: 26rpx; color: #999; }
 

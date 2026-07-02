@@ -40,7 +40,7 @@
       <view class="category-grid">
         <view class="category-card" v-for="cat in petCategories" :key="cat.id"
               @click="goCategory(cat.id)">
-          <text class="category-icon">{{ cat.icon }}</text>
+          <image :src="cat.icon" mode="aspectFit" class="category-icon" />
           <text class="category-name">{{ cat.name }}</text>
         </view>
       </view>
@@ -83,14 +83,14 @@ const carouselImages = [
 ]
 
 const petCategories = [
-  { id: 1, icon: '🐕', name: '狗狗' },
-  { id: 2, icon: '🐱', name: '猫咪' },
-  { id: 3, icon: '🐹', name: '小宠' },
-  { id: 4, icon: '🐟', name: '水族' },
-  { id: 5, icon: '🐦', name: '鸟类' },
-  { id: 6, icon: '🦴', name: '狗粮' },
-  { id: 7, icon: '🐟', name: '猫粮' },
-  { id: 8, icon: '🧸', name: '玩具' }
+  { id: 1, icon: '/static/狗.png', name: '狗狗' },
+  { id: 2, icon: '/static/猫咪.png', name: '猫咪' },
+  { id: 3, icon: '/static/小宠.png', name: '小宠' },
+  { id: 4, icon: '/static/鱼.png', name: '鱼类' },
+  { id: 5, icon: '/static/鸟.png', name: '鸟类' },
+  { id: 6, icon: '/static/袋装狗粮.png', name: '狗粮' },
+  { id: 7, icon: '/static/猫粮.png', name: '猫粮' },
+  { id: 8, icon: '/static/宠物玩具.png', name: '玩具' }
 ]
 
 onMounted(async () => {
@@ -275,7 +275,8 @@ function goLogin() {
 }
 
 .category-icon {
-  font-size: 56rpx;
+  width: 64rpx;
+  height: 64rpx;
 }
 
 .category-name {

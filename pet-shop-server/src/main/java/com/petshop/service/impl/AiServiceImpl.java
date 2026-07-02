@@ -206,6 +206,8 @@ public class AiServiceImpl implements AiService {
             if (p.getSales() != null && p.getSales() > 0) {
                 sb.append(String.format(" | 已售：%d", p.getSales()));
             }
+            // 添加商品链接，前端解析为可点击跳转
+            sb.append(String.format(" [查看详情](product:%d)", p.getId()));
             sb.append("\n");
         }
         sb.append("\n");

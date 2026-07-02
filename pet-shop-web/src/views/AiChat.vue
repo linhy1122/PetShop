@@ -27,7 +27,12 @@
               <!-- AI 头像 -->
               <div class="msg-avatar" v-if="msg.role === 'ai'">🐾</div>
               <div class="msg-bubble" :class="msg.role === 'user' ? 'bubble-user' : 'bubble-ai'">
-                {{ msg.content }}
+                <template v-for="(seg, si) in parseContent(msg.content)" :key="si">
+                  <a v-if="seg.link" class="product-link"
+                     :href="`/product/detail?id=${seg.id}`"
+                     @click.prevent="goProduct(seg.id)">{{ seg.text }}</a>
+                  <span v-else>{{ seg.text }}</span>
+                </template>
               </div>
               <!-- 用户头像 -->
               <div class="msg-avatar" v-if="msg.role === 'user'">😊</div>
@@ -102,6 +107,24 @@ async function sendMessage() {
 }
 
 function sendQuick(q) { input.value = q; sendMessage() }
+
+function parseContent(content) {
+  const parts = []
+  const regex = /\[([^\]]*)\]\(product:(\d+)\)/g
+  let last = 0
+  let m
+  while ((m = regex.exec(content)) !== null) {
+    if (m.index > last) parts.push({ text: content.slice(last, m.index) })
+    parts.push({ text: m[1], link: true, id: m[2] })
+    last = regex.lastIndex
+  }
+  if (last < content.length) parts.push({ text: content.slice(last) })
+  return parts.length ? parts : [{ text: content }]
+}
+
+function goProduct(id) {
+  window.open(`/product/detail?id=${id}`, '_blank')
+}
 
 async function scrollToBottom() {
   await nextTick()
@@ -270,4 +293,13 @@ async function scrollToBottom() {
 .send-btn:hover { transform: scale(1.05); }
 .send-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
 .send-icon { color: #fff; font-size: 16px; }
+
+/* 商品链接 */
+.product-link {
+  color: #FF6B35;
+  text-decoration: underline;
+  cursor: pointer;
+  font-weight: 500;
+}
+.product-link:hover { color: #e55a2b; }
 </style>
