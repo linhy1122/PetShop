@@ -15,6 +15,11 @@ export function getHotProductsApi(limit = 8) {
   return request.get('/product/hot', { params: { limit } })
 }
 
+/** 个性化推荐（协同过滤） */
+export function getRecommendApi(userId, limit = 8) {
+  return request.get('/product/recommend', { params: { userId, limit } })
+}
+
 /** 新增商品 */
 export function createProductApi(data) {
   return request.post('/product', data)

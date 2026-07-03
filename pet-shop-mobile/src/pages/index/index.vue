@@ -63,7 +63,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { getHotProductsApi } from '@/api/product'
+import { getHotProductsApi, getRecommendApi } from '@/api/product'
 import { useUserStore } from '@/stores/user'
 import { useNavStore } from '@/stores/nav'
 import ProductCard from '@/components/ProductCard.vue'
@@ -96,13 +96,26 @@ const petCategories = [
 onMounted(async () => {
   loading.value = true
   try {
-    const res = await getHotProductsApi(8)
-    const products = res.data || []
+    let products = []
+    if (userStore.isLoggedIn()) {
+      // 已登录 → 个性化推荐
+      const res = await getRecommendApi(userStore.userInfo.userId, 8)
+      products = res.data || []
+    }
+    // 未登录或无推荐结果 → 降级热门
+    if (!products.length) {
+      const res = await getHotProductsApi(8)
+      products = res.data || []
+    }
     hotProducts.value = products
     uni.preloadProductImages(products)
   } catch (e) {
-    uni.showToast({ title: '加载热门商品失败', icon: 'none' })
-    hotProducts.value = []
+    try {
+      const res = await getHotProductsApi(8)
+      hotProducts.value = res.data || []
+    } catch (e2) {
+      hotProducts.value = []
+    }
   } finally {
     loading.value = false
   }
