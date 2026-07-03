@@ -67,8 +67,8 @@ ai:
 # 微信小程序配置
 wechat:
   mini-program:
-    app-id: wx304285f701d90179
-    app-secret: 552d5c84afb69c13a939d6e1dce86790
+    app-id: wx29e053994c914f60
+    app-secret: e2a29b27ec6b595fa2b0fec443a2dae7
 
 # GitHub OAuth 配置
 github:
