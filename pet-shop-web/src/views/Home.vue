@@ -59,7 +59,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { getHotProductsApi } from '@/api/product'
+import { getHotProductsApi, getRecommendApi } from '@/api/product'
 import { addToCartApi } from '@/api/cart'
 import { useUserStore } from '@/stores/user'
 import { useCartStore } from '@/stores/cart'
@@ -89,9 +89,16 @@ const petCategories = ref([
 
 onMounted(async () => {
   try {
-    hotProducts.value = (await getHotProductsApi(8)).data || []
+    if (userStore.isLoggedIn()) {
+      // 已登录 → 个性化推荐
+      hotProducts.value = (await getRecommendApi(userStore.userInfo.userId, 8)).data || []
+    } else {
+      hotProducts.value = (await getHotProductsApi(8)).data || []
+    }
   } catch (e) {
-    ElMessage.warning('加载热门商品失败')
+    try {
+      hotProducts.value = (await getHotProductsApi(8)).data || []
+    } catch (e2) { /* ignore */ }
   }
 })
 

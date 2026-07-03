@@ -22,6 +22,18 @@
         </el-tag>
       </div>
 
+      <!-- 排序栏 -->
+      <div class="sort-bar">
+        <span class="sort-item" :class="{ active: query.sortBy === 'default' || !query.sortBy }"
+              @click="doSort('default')">综合</span>
+        <span class="sort-item" :class="{ active: query.sortBy === 'price_asc' }"
+              @click="doSort('price_asc')">价格 ↑</span>
+        <span class="sort-item" :class="{ active: query.sortBy === 'price_desc' }"
+              @click="doSort('price_desc')">价格 ↓</span>
+        <span class="sort-item" :class="{ active: query.sortBy === 'sales' }"
+              @click="doSort('sales')">销量</span>
+      </div>
+
       <!-- 商品网格 -->
       <div class="product-grid" v-loading="loading">
         <el-empty v-if="!loading && products.length === 0" description="暂无商品" />
@@ -82,7 +94,7 @@ const categories = ref([])
 const query = reactive({
   page: 1, size: 12, categoryId: route.query.categoryId || undefined,
   productType: route.query.type ? Number(route.query.type) : undefined,
-  keyword: ''
+  keyword: '', sortBy: 'default'
 })
 
 onMounted(async () => {
@@ -100,7 +112,9 @@ async function loadCategories() {
 async function fetchData() {
   loading.value = true
   try {
-    const res = await getProductListApi({ ...query })
+    const params = { ...query }
+    if (params.sortBy === 'default') delete params.sortBy
+    const res = await getProductListApi(params)
     products.value = res.data?.records || []
     total.value = res.data?.total || 0
   } catch (e) {
@@ -108,6 +122,12 @@ async function fetchData() {
   } finally {
     loading.value = false
   }
+}
+
+function doSort(sortBy) {
+  query.sortBy = sortBy
+  query.page = 1
+  fetchData()
 }
 
 function selectCategory(id) {
@@ -134,8 +154,19 @@ async function handleAddToCart(product) {
 <style scoped>
 .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
 .filter-bar { display: flex; align-items: center; margin-bottom: 20px; }
-.category-tags { margin-bottom: 20px; }
+.category-tags { margin-bottom: 16px; }
 .category-tags .tag { cursor: pointer; margin: 0 8px 8px 0; }
+
+.sort-bar {
+  display: flex; gap: 8px; margin-bottom: 20px;
+  padding: 10px 16px; background: #f5f7fa; border-radius: 8px;
+}
+.sort-item {
+  padding: 6px 16px; border-radius: 6px; cursor: pointer;
+  font-size: 14px; color: #606266; transition: all 0.2s; user-select: none;
+}
+.sort-item:hover { color: #f56c6c; }
+.sort-item.active { background: #f56c6c; color: #fff; font-weight: 500; }
 .product-grid {
   display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
   gap: 20px;

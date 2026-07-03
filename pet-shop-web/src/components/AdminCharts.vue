@@ -1,5 +1,6 @@
 <template>
   <div class="chart-container">
+    <!-- 近7日趋势折线图 -->
     <el-card shadow="hover">
       <template #header>
         <div class="card-header">
@@ -11,39 +12,85 @@
       </template>
       <div ref="chartRef" class="chart-box"></div>
     </el-card>
+
+    <!-- 订单状态分布饼图 -->
+    <el-card shadow="hover" style="margin-top: 20px">
+      <template #header>
+        <div class="card-header">
+          <span>订单状态分布</span>
+        </div>
+      </template>
+      <div ref="pieChartRef" class="chart-box"></div>
+    </el-card>
+
+    <!-- 热卖 Top 10 排行榜 -->
+    <el-card shadow="hover" style="margin-top: 20px">
+      <template #header>
+        <div class="card-header">
+          <span>🏆 热卖排行榜 Top 10</span>
+        </div>
+      </template>
+      <div ref="barChartRef" class="chart-box" style="height: 450px"></div>
+    </el-card>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue'
+import { ref, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import * as echarts from 'echarts'
 import { ElMessage } from 'element-plus'
-import { getStatisticsTrend } from '@/api/admin'
+import { getStatisticsTrend, getTopSales } from '@/api/admin'
 
-// 图表实例
+// Props
+const props = defineProps({
+  statusDistribution: {
+    type: Array,
+    default: () => []
+  }
+})
+
+// 订单状态分组映射
+const STATUS_GROUPS = [
+  { label: '待支付',  codes: [0] },
+  { label: '待发货',  codes: [1] },
+  { label: '已发货',  codes: [2] },
+  { label: '待评价',  codes: [3] },
+  { label: '已完成',  codes: [4] },
+  { label: '已取消',  codes: [-1] },
+  { label: '退款中',  codes: [-2, -3, -4] }
+]
+
+const PIE_COLORS = ['#409EFF', '#67C23A', '#E6A23C', '#F56C6C', '#909399', '#FF6B6B', '#FFA726']
+
+// 趋势图实例
 let chartInstance = null
 const chartRef = ref(null)
 const loading = ref(false)
 
-// 获取趋势数据
+// 饼图实例
+let pieChartInstance = null
+const pieChartRef = ref(null)
+
+// 热卖排行柱状图实例
+let barChartInstance = null
+const barChartRef = ref(null)
+
+// ==================== 趋势折线图 ====================
+
 const fetchTrendData = async () => {
   const res = await getStatisticsTrend()
   return res.data
 }
 
-// 初始化图表
 const initChart = () => {
   if (!chartRef.value) return
   chartInstance = echarts.init(chartRef.value)
-  // 自适应
   window.addEventListener('resize', () => {
     chartInstance?.resize()
   })
-  // 初次加载
   updateChart()
 }
 
-// 更新图表数据
 const updateChart = async () => {
   try {
     loading.value = true
@@ -115,12 +162,177 @@ const updateChart = async () => {
   }
 }
 
-// 手动刷新
 const refreshData = () => {
   updateChart()
 }
 
-// 定时刷新（每30秒）
+// ==================== 订单状态饼图 ====================
+
+const initPieChart = () => {
+  if (!pieChartRef.value) return
+  pieChartInstance = echarts.init(pieChartRef.value)
+  window.addEventListener('resize', () => {
+    pieChartInstance?.resize()
+  })
+  updatePieChart()
+}
+
+const updatePieChart = () => {
+  if (!pieChartInstance) return
+
+  const rawData = props.statusDistribution || []
+
+  // 构建 status -> count 映射
+  const countMap = {}
+  rawData.forEach(item => {
+    countMap[item.status] = item.count || 0
+  })
+
+  // 按分组汇总
+  const pieData = STATUS_GROUPS.map((group, index) => {
+    let total = 0
+    group.codes.forEach(code => {
+      total += (Number(countMap[code]) || 0)
+    })
+    return {
+      value: total,
+      name: group.label,
+      itemStyle: { color: PIE_COLORS[index] }
+    }
+  }).filter(item => item.value > 0)
+
+  // 全为0时显示占位
+  if (pieData.length === 0) {
+    pieData.push({ value: 1, name: '暂无数据', itemStyle: { color: '#DCDFE6' } })
+  }
+
+  const option = {
+    tooltip: {
+      trigger: 'item',
+      formatter: '{b}: {c} ({d}%)'
+    },
+    legend: {
+      orient: 'vertical',
+      left: 10,
+      top: 'center'
+    },
+    series: [{
+      name: '订单状态',
+      type: 'pie',
+      radius: ['40%', '70%'],
+      center: ['55%', '50%'],
+      avoidLabelOverlap: false,
+      itemStyle: {
+        borderRadius: 4,
+        borderColor: '#fff',
+        borderWidth: 2
+      },
+      label: { show: false },
+      emphasis: {
+        label: { show: true, fontSize: 14, fontWeight: 'bold' }
+      },
+      data: pieData
+    }]
+  }
+  pieChartInstance.setOption(option, true)
+}
+
+// ==================== 热卖 Top 10 柱状图 ====================
+
+const initBarChart = () => {
+  if (!barChartRef.value) return
+  barChartInstance = echarts.init(barChartRef.value)
+  window.addEventListener('resize', () => {
+    barChartInstance?.resize()
+  })
+  updateBarChart()
+}
+
+const updateBarChart = async () => {
+  if (!barChartInstance) return
+  try {
+    const res = await getTopSales()
+    const list = res.data || []
+
+    // 反转数组使排名第一的在最上方
+    const reversed = [...list].reverse()
+    const names = reversed.map(p => p.name.length > 12 ? p.name.slice(0, 12) + '...' : p.name)
+    const values = reversed.map(p => p.sales || 0)
+    const maxVal = Math.max(...values, 1)
+
+    const option = {
+      tooltip: {
+        trigger: 'axis',
+        axisPointer: { type: 'shadow' },
+        formatter: function (params) {
+          const idx = list.length - 1 - params[0].dataIndex
+          const p = list[idx]
+          return `<strong>#${idx + 1} ${p.name}</strong><br/>
+                  💰 ¥${p.price?.toFixed(2) || '0.00'}<br/>
+                  📦 销量 ${p.sales || 0}<br/>
+                  📋 库存 ${p.stock ?? '-'}`
+        }
+      },
+      grid: {
+        left: '3%',
+        right: '12%',
+        top: '5%',
+        bottom: '5%'
+      },
+      xAxis: {
+        type: 'value',
+        max: maxVal * 1.15,
+        axisLabel: { show: false },
+        splitLine: { lineStyle: { color: '#f0f0f0' } }
+      },
+      yAxis: {
+        type: 'category',
+        data: names,
+        axisLine: { show: false },
+        axisTick: { show: false },
+        axisLabel: {
+          fontSize: 13,
+          color: '#333',
+          fontWeight: 500
+        }
+      },
+      series: [{
+        type: 'bar',
+        data: values.map((v, i) => ({
+          value: v,
+          itemStyle: {
+            color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
+              { offset: 0, color: '#FF6B35' },
+              { offset: 1, color: '#FFB088' }
+            ]),
+            borderRadius: [0, 6, 6, 0]
+          }
+        })),
+        barWidth: 20,
+        label: {
+          show: true,
+          position: 'right',
+          fontSize: 12,
+          color: '#666',
+          formatter: function (params) {
+            return `已售 ${params.value}`
+          }
+        }
+      }]
+    }
+    barChartInstance.setOption(option, true)
+  } catch (error) {
+    console.error('获取热卖排行失败', error)
+  }
+}
+
+// 监听 statusDistribution prop 变化
+watch(() => props.statusDistribution, () => {
+  updatePieChart()
+}, { deep: true })
+
+// ==================== 生命周期 ====================
+
 let timer = null
 const startPolling = () => {
   timer = setInterval(() => {
@@ -131,6 +343,8 @@ const startPolling = () => {
 onMounted(() => {
   nextTick(() => {
     initChart()
+    initPieChart()
+    initBarChart()
     startPolling()
   })
 })
@@ -139,6 +353,8 @@ onBeforeUnmount(() => {
   if (timer) clearInterval(timer)
   window.removeEventListener('resize', () => {})
   chartInstance?.dispose()
+  pieChartInstance?.dispose()
+  barChartInstance?.dispose()
 })
 </script>
 
