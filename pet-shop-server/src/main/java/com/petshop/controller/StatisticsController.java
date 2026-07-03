@@ -1,6 +1,7 @@
 package com.petshop.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.petshop.common.Result;
 import com.petshop.entity.Order;
 import com.petshop.entity.Product;
@@ -13,6 +14,7 @@ import com.petshop.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -33,7 +35,7 @@ public class StatisticsController {
     @Autowired
     private UserService userService;
 
-    /** 获取总览数据（四项总数） */
+    /** 获取总览数据（四项总数 + 营收 + 订单状态分布） */
     @GetMapping("/overview")
     public Result<Map<String, Object>> overview() {
         Map<String, Object> data = new HashMap<>();
@@ -41,6 +43,49 @@ public class StatisticsController {
         data.put("stores", storeService.count());
         data.put("orders", orderService.count());
         data.put("users", userService.count());
+
+        // ========== 营收统计 ==========
+
+        // 今日GMV：今日创建的订单 total_amount 总和（排除取消/退款状态）
+        QueryWrapper<Order> gmvQw = new QueryWrapper<>();
+        gmvQw.select("IFNULL(SUM(total_amount), 0) AS total")
+             .apply("DATE(create_time) = CURDATE()")
+             .notIn("status", -1, -2, -3, -4);
+        BigDecimal todayGmv = (BigDecimal) orderService.listMaps(gmvQw).get(0).get("total");
+        data.put("todayGmv", todayGmv);
+
+        // 今日实收：今日支付的 pay_amount 总和
+        QueryWrapper<Order> revQw = new QueryWrapper<>();
+        revQw.select("IFNULL(SUM(pay_amount), 0) AS total")
+             .apply("DATE(pay_time) = CURDATE()")
+             .in("status", 1, 2, 3, 4);
+        BigDecimal todayRevenue = (BigDecimal) orderService.listMaps(revQw).get(0).get("total");
+        data.put("todayRevenue", todayRevenue);
+
+        // 本月实收：本月已支付订单的 pay_amount 总和
+        QueryWrapper<Order> monthQw = new QueryWrapper<>();
+        monthQw.select("IFNULL(SUM(pay_amount), 0) AS total")
+               .apply("YEAR(create_time) = YEAR(CURDATE()) AND MONTH(create_time) = MONTH(CURDATE())")
+               .in("status", 1, 2, 3, 4);
+        BigDecimal monthRevenue = (BigDecimal) orderService.listMaps(monthQw).get(0).get("total");
+        data.put("monthRevenue", monthRevenue);
+
+        // 本月退款：本月退款成功的 refund_money 总和
+        QueryWrapper<Order> refundQw = new QueryWrapper<>();
+        refundQw.select("IFNULL(SUM(refund_money), 0) AS total")
+                .apply("YEAR(refund_time) = YEAR(CURDATE()) AND MONTH(refund_time) = MONTH(CURDATE())")
+                .in("status", -3, -4);
+        BigDecimal monthRefund = (BigDecimal) orderService.listMaps(refundQw).get(0).get("total");
+        data.put("monthRefund", monthRefund);
+
+        // ========== 订单状态分布 ==========
+        QueryWrapper<Order> statusQw = new QueryWrapper<>();
+        statusQw.select("status", "COUNT(*) AS count")
+                .groupBy("status")
+                .orderByAsc("status");
+        List<Map<String, Object>> statusDistribution = orderService.listMaps(statusQw);
+        data.put("statusDistribution", statusDistribution);
+
         return Result.ok(data);
     }
 
