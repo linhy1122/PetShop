@@ -32,59 +32,71 @@ public class RecommendServiceImpl implements RecommendService {
         // 1. 获取所有有效订单 → (userId → Set<productId>)
         Map<Long, Set<Long>> userProducts = buildUserProductMap();
 
-        // 2. 目标用户的购买集合
-        Set<Long> targetSet = userProducts.getOrDefault(userId, Collections.emptySet());
-        if (targetSet.isEmpty()) {
-            // 冷启动：返回热门商品
-            LambdaQueryWrapper<Product> hotWrapper = new LambdaQueryWrapper<>();
-            hotWrapper.eq(Product::getStatus, 1)
-                      .orderByDesc(Product::getSales)
-                      .last("LIMIT " + limit);
-            return productService.list(hotWrapper);
-        }
+        // 2. 目标用户的购买集合（用于排除已购商品）
+        Set<Long> purchased = userProducts.getOrDefault(userId, Collections.emptySet());
 
-        // 3. 计算与其他用户的 Jaccard 相似度，累计商品得分
+        // 3. 协同过滤打分（排除已购商品）
         Map<Long, Double> scores = new HashMap<>();
-        for (Map.Entry<Long, Set<Long>> entry : userProducts.entrySet()) {
-            Long otherUserId = entry.getKey();
-            if (otherUserId.equals(userId)) continue;
+        if (!purchased.isEmpty()) {
+            for (Map.Entry<Long, Set<Long>> entry : userProducts.entrySet()) {
+                Long otherUserId = entry.getKey();
+                if (otherUserId.equals(userId)) continue;
 
-            Set<Long> otherSet = entry.getValue();
-            double similarity = jaccard(targetSet, otherSet);
-            if (similarity <= 0) continue;
+                Set<Long> otherSet = entry.getValue();
+                double similarity = jaccard(purchased, otherSet);
+                if (similarity <= 0) continue;
 
-            // 相似用户买了但目标用户没买的商品，加分
-            for (Long productId : otherSet) {
-                if (!targetSet.contains(productId)) {
-                    scores.merge(productId, similarity, Double::sum);
+                for (Long productId : otherSet) {
+                    if (!purchased.contains(productId)) {
+                        scores.merge(productId, similarity, Double::sum);
+                    }
                 }
             }
         }
 
-        // 4. 如果没找到推荐（所有用户都不相似），降级为热门
-        if (scores.isEmpty()) {
-            LambdaQueryWrapper<Product> hotWrapper = new LambdaQueryWrapper<>();
-            hotWrapper.eq(Product::getStatus, 1)
-                      .orderByDesc(Product::getSales)
-                      .last("LIMIT " + limit);
-            return productService.list(hotWrapper);
-        }
-
-        // 5. 按得分排序取 top N
-        List<Long> recommendedIds = scores.entrySet().stream()
+        // 4. CF 推荐商品按得分排序
+        List<Long> cfIds = scores.entrySet().stream()
                 .sorted(Map.Entry.<Long, Double>comparingByValue().reversed())
-                .limit(limit)
                 .map(Map.Entry::getKey)
                 .collect(Collectors.toList());
 
-        // 6. 查询商品完整信息，保持排序
-        List<Product> products = productService.listByIds(recommendedIds);
-        Map<Long, Product> productMap = products.stream()
-                .collect(Collectors.toMap(Product::getId, p -> p));
-        return recommendedIds.stream()
-                .map(productMap::get)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
+        // 5. 查询 CF 推荐商品
+        List<Product> result = new ArrayList<>();
+        Set<Long> addedIds = new HashSet<>();
+        for (Long id : cfIds) {
+            if (result.size() >= limit) break;
+            Product p = productService.getById(id);
+            if (p != null && p.getStatus() != null && p.getStatus() == 1) {
+                result.add(p);
+                addedIds.add(id);
+            }
+        }
+
+        // 6. 不足 limit 个 → 随机补充其他在售商品
+        if (result.size() < limit) {
+            List<Product> fillers = getRandomFillers(limit - result.size(), purchased, addedIds);
+            result.addAll(fillers);
+        }
+
+        return result;
+    }
+
+    /**
+     * 随机补充在售商品，排除已购买和已推荐的商品
+     */
+    private List<Product> getRandomFillers(int need, Set<Long> purchased, Set<Long> alreadyAdded) {
+        LambdaQueryWrapper<Product> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(Product::getStatus, 1);
+        if (!purchased.isEmpty() || !alreadyAdded.isEmpty()) {
+            Set<Long> exclude = new HashSet<>(purchased);
+            exclude.addAll(alreadyAdded);
+            wrapper.notIn(Product::getId, exclude);
+        }
+        // 随机排序（MySQL RAND）
+        wrapper.last("ORDER BY RAND() LIMIT " + (need * 3));
+        List<Product> candidates = productService.list(wrapper);
+        Collections.shuffle(candidates);
+        return candidates.stream().limit(need).collect(Collectors.toList());
     }
 
     /**
