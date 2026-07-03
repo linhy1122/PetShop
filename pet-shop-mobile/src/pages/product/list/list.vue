@@ -55,9 +55,9 @@
       <text>暂无数据 (products={{ products.length }}, loading={{ loading }})</text>
     </view>
 
-    <!-- 加载更多 -->
-    <view class="load-more" v-if="hasMore && !loading" @click="loadMore">
-      <text class="load-text">{{ loadingMore ? '加载中...' : '加载更多' }}</text>
+    <!-- 加载更多（滚动到底自动触发） -->
+    <view class="load-more" v-if="loadingMore">
+      <text class="load-text">加载中...</text>
     </view>
     <view class="load-more" v-else-if="!loading && products.length > 0 && !hasMore">
       <text class="load-text">— 没有更多了 —</text>
@@ -67,7 +67,7 @@
 
 <script setup>
 import { ref, reactive, computed } from 'vue'
-import { onLoad, onShow } from '@dcloudio/uni-app'
+import { onLoad, onShow, onReachBottom } from '@dcloudio/uni-app'
 import { getProductListApi } from '@/api/product'
 import { useNavStore } from '@/stores/nav'
 import request from '@/utils/request'
@@ -206,6 +206,13 @@ function loadMore() {
   page.current++
   fetchData(false)
 }
+
+// 滚动到底部自动加载
+onReachBottom(() => {
+  if (hasMore.value && !loading.value && !loadingMore.value) {
+    loadMore()
+  }
+})
 </script>
 
 <style scoped>
