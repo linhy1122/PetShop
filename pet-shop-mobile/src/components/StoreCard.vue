@@ -1,5 +1,5 @@
 <template>
-  <view class="store-card" @click="goDetail">
+  <view class="store-card" @click="$emit('select')">
     <image :src="storeImg" mode="aspectFill" class="store-img"
            @error="onImgError" />
     <view class="store-info">
@@ -13,6 +13,9 @@
       </view>
       <view class="store-hours">🕐 {{ store.businessHours || '09:00-21:00' }}</view>
       <view class="store-phone" v-if="store.phone">📞 {{ store.phone }}</view>
+      <view class="store-action" @click.stop="goDetail">
+        <text class="action-text">进店看看 ›</text>
+      </view>
     </view>
   </view>
 </template>
@@ -24,6 +27,8 @@ const props = defineProps({
   store: { type: Object, required: true },
   distance: { type: Number, default: null }
 })
+
+defineEmits(['select'])
 
 const FALLBACK_IMG = 'https://picsum.photos/seed/store-fb/200/200'
 const storeImg = ref(uni.fixImgUrl(props.store.image) || FALLBACK_IMG)
@@ -84,5 +89,19 @@ function goDetail() {
 .store-address, .store-hours, .store-phone {
   font-size: 24rpx;
   color: #6B7280;
+}
+
+.store-action {
+  margin-top: 12rpx;
+  align-self: flex-start;
+  background: linear-gradient(135deg, #FF6B35, #FF8F5E);
+  padding: 12rpx 28rpx;
+  border-radius: 24rpx;
+}
+
+.action-text {
+  font-size: 24rpx;
+  color: #fff;
+  font-weight: 500;
 }
 </style>

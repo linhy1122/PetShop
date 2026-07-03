@@ -11,7 +11,6 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { getVideoListApi } from '@/api/video'
-import { videos as mockVideos } from '@/mock'
 import VideoCard from '@/components/VideoCard.vue'
 import EmptyState from '@/components/EmptyState.vue'
 
@@ -22,10 +21,17 @@ onMounted(async () => {
   loading.value = true
   try {
     const res = await getVideoListApi({ size: 20, status: 1 })
-    videos.value = res.data?.records || []
-    if (!videos.value.length) videos.value = mockVideos
+    const list = res.data?.records || []
+    videos.value = list
+    if (list.length) {
+      list.forEach(v => {
+        if (v.cover) v.cover = uni.fixImgUrl(v.cover)
+        if (v.videoUrl) v.videoUrl = uni.fixImgUrl(v.videoUrl)
+      })
+    }
   } catch (e) {
-    videos.value = mockVideos
+    videos.value = []
+    uni.showToast({ title: '加载视频失败', icon: 'none' })
   } finally {
     loading.value = false
   }

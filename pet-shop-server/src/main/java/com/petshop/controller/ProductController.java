@@ -6,6 +6,7 @@ import com.petshop.common.Result;
 import com.petshop.dto.ProductDto;
 import com.petshop.entity.Product;
 import com.petshop.service.ProductService;
+import com.petshop.service.RecommendService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,6 +22,9 @@ public class ProductController {
     @Autowired
     private ProductService productService;
 
+    @Autowired
+    private RecommendService recommendService;
+
     /** 分页查询商品列表（管理端可传 status 查看全部/下架商品） */
     @GetMapping("/list")
     public Result<Page<Product>> list(@RequestParam(defaultValue = "1") Integer page,
@@ -29,7 +33,8 @@ public class ProductController {
                                        @RequestParam(required = false) Long storeId,
                                        @RequestParam(required = false) Integer productType,
                                        @RequestParam(required = false) Integer status,
-                                       @RequestParam(required = false) String keyword) {
+                                       @RequestParam(required = false) String keyword,
+                                       @RequestParam(required = false) String sortBy) {
         LambdaQueryWrapper<Product> wrapper = new LambdaQueryWrapper<>();
         if (status != null) {
             wrapper.eq(Product::getStatus, status);
@@ -48,7 +53,15 @@ public class ProductController {
         if (keyword != null && !keyword.isEmpty()) {
             wrapper.like(Product::getName, keyword);
         }
-        wrapper.orderByDesc(Product::getSales);
+        // 排序：综合(默认)=销量降序, price_asc=价格升序, price_desc=价格降序, sales=销量降序
+        if ("price_asc".equals(sortBy)) {
+            wrapper.orderByAsc(Product::getPrice);
+        } else if ("price_desc".equals(sortBy)) {
+            wrapper.orderByDesc(Product::getPrice);
+        } else {
+            // 默认综合排序：按销量降序
+            wrapper.orderByDesc(Product::getSales);
+        }
         Page<Product> result = productService.page(new Page<>(page, size), wrapper);
         return Result.ok(result);
     }
@@ -67,6 +80,13 @@ public class ProductController {
                .orderByDesc(Product::getSales)
                .last("LIMIT " + limit);
         return Result.ok(productService.list(wrapper));
+    }
+
+    /** 个性化推荐（协同过滤） */
+    @GetMapping("/recommend")
+    public Result<?> recommend(@RequestParam Long userId,
+                               @RequestParam(defaultValue = "8") Integer limit) {
+        return Result.ok(recommendService.recommend(userId, limit));
     }
 
     /** 新增商品 */

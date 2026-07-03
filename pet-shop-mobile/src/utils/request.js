@@ -120,4 +120,7 @@ request.delete = function(url, config = {}) {
   return request({ ...config, url, method: 'DELETE' })
 }
 
+// 导出 BASE_URL 以便 uniapp.uploadFile 等需要完整 URL 的场景使用
+request.baseURL = BASE_URL
+
 export default request

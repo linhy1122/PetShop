@@ -22,7 +22,7 @@
       </view>
       <view class="selected-actions">
         <view class="selected-action" @click="navigateToStore">🧭 导航</view>
-        <view class="selected-action primary" @click="goStoreDetail">详情 ›</view>
+        <view class="selected-action primary" @click="goStoreDetail">进店看看</view>
       </view>
     </view>
 
@@ -35,7 +35,8 @@
         <text>附近商店 ({{ stores.length }})</text>
         <text class="list-sort" v-if="myLat !== null">按距离排序</text>
       </view>
-      <StoreCard v-for="s in stores" :key="s.id" :store="s" :distance="s._distance" />
+      <StoreCard v-for="s in stores" :key="s.id" :store="s" :distance="s._distance"
+                 @select="onStoreSelect(s)" />
       <EmptyState v-if="stores.length === 0" description="附近暂无商店" />
     </view>
   </view>
@@ -180,6 +181,14 @@ onMounted(async () => {
 function onMarkerTap(e) {
   const store = stores.value.find(s => s.id === e.detail.markerId)
   if (store) selectedStore.value = store
+}
+
+function onStoreSelect(store) {
+  selectedStore.value = store
+  if (store.latitude && store.longitude) {
+    centerLat.value = store.latitude
+    centerLng.value = store.longitude
+  }
 }
 
 function navigateToStore() {

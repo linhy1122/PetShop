@@ -2,9 +2,13 @@ package com.petshop.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.crypto.digest.BCrypt;
+import cn.hutool.http.HttpRequest;
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.petshop.config.WechatProperties;
 import com.petshop.dto.UserAdminDto;
 import com.petshop.entity.Order;
 import com.petshop.entity.User;
@@ -29,10 +33,12 @@ import java.util.stream.Collectors;
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
 
     private final OrderMapper orderMapper;
+    private final WechatProperties wechatProperties;
 
 
-    public UserServiceImpl(OrderMapper orderMapper) {
+    public UserServiceImpl(OrderMapper orderMapper, WechatProperties wechatProperties) {
         this.orderMapper = orderMapper;
+        this.wechatProperties = wechatProperties;
     }
 
     @Override
@@ -174,6 +180,58 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                 "nickname", user.getNickname(),
                 "role", user.getRole()
         );
+    }
+
+    @Override
+    public Map<String, Object> loginByWechat(String code) {
+        // 1. 用 code 向微信服务器换取 openid
+        String url = "https://api.weixin.qq.com/sns/jscode2session"
+                + "?appid=" + wechatProperties.getAppId()
+                + "&secret=" + wechatProperties.getAppSecret()
+                + "&js_code=" + code
+                + "&grant_type=authorization_code";
+
+        String response = HttpRequest.get(url).execute().body();
+        JSONObject result = JSONUtil.parseObj(response);
+
+        String openid = result.getStr("openid");
+        if (openid == null) {
+            throw new RuntimeException("微信登录失败: " + result.getStr("errmsg", "未知错误"));
+        }
+
+        // 2. 根据 openid 查找用户
+        User user = findByOpenid(openid);
+        if (user == null) {
+            // 3. 自动注册
+            user = new User();
+            user.setUsername("wx_" + openid.substring(0, 12));
+            user.setPassword(BCrypt.hashpw(UUID.randomUUID().toString()));
+            user.setNickname("微信用户" + openid.substring(openid.length() - 6));
+            user.setOpenid(openid);
+            user.setPhone("");
+            user.setMemberLevel(0);
+            user.setRole("user");
+            user.setStatus(0);
+            save(user);
+        }
+
+        if (user.getStatus() == 1) {
+            throw new RuntimeException("账户已被禁用");
+        }
+
+        String token = "token-" + UUID.randomUUID();
+        return Map.of(
+                "token", token,
+                "userId", user.getId(),
+                "nickname", user.getNickname(),
+                "role", user.getRole()
+        );
+    }
+
+    private User findByOpenid(String openid) {
+        LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(User::getOpenid, openid);
+        return getOne(wrapper);
     }
 
     @Override

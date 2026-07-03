@@ -35,6 +35,11 @@ export function updatePasswordApi(userId, oldPassword, newPassword) {
   return request.put('/user/password', null, { params: { userId, oldPassword, newPassword } })
 }
 
+/** 微信小程序登录 */
+export function wxLoginApi(code) {
+  return request.post('/user/wx-login', { code })
+}
+
 /** GitHub OAuth 授权地址 */
 export function getGithubAuthUrl() {
   return 'http://localhost:8080/oauth/github/authorize'

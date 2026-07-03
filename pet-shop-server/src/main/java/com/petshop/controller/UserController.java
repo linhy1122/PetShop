@@ -5,6 +5,7 @@ import com.petshop.common.Result;
 import com.petshop.dto.LoginDto;
 import com.petshop.dto.RegisterDto;
 import com.petshop.dto.UserAdminDto;
+import com.petshop.dto.WxLoginDto;
 import com.petshop.entity.User;
 import com.petshop.service.UserService;
 import com.petshop.vo.UserAdminVO;
@@ -42,6 +43,13 @@ public class UserController {
                 "nickname", user.getNickname(),
                 "role", user.getRole()
         ));
+    }
+
+    /** 微信小程序登录 */
+    @PostMapping("/wx-login")
+    public Result<?> wxLogin(@RequestBody WxLoginDto dto) {
+        Map<String, Object> result = userService.loginByWechat(dto.getCode());
+        return Result.ok(result);
     }
 
     @GetMapping("/info")
