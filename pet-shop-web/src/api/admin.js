@@ -9,3 +9,8 @@ export const getStatisticsOverview = () => {
 export const getStatisticsTrend = () => {
   return request.get('/admin/statistics/trend')
 }
+
+/** 获取热卖 Top 10 */
+export const getTopSales = () => {
+  return request.get('/admin/statistics/top-sales')
+}

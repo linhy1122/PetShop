@@ -22,6 +22,16 @@
       </template>
       <div ref="pieChartRef" class="chart-box"></div>
     </el-card>
+
+    <!-- 热卖 Top 10 排行榜 -->
+    <el-card shadow="hover" style="margin-top: 20px">
+      <template #header>
+        <div class="card-header">
+          <span>🏆 热卖排行榜 Top 10</span>
+        </div>
+      </template>
+      <div ref="barChartRef" class="chart-box" style="height: 450px"></div>
+    </el-card>
   </div>
 </template>
 
@@ -29,7 +39,7 @@
 import { ref, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import * as echarts from 'echarts'
 import { ElMessage } from 'element-plus'
-import { getStatisticsTrend } from '@/api/admin'
+import { getStatisticsTrend, getTopSales } from '@/api/admin'
 
 // Props
 const props = defineProps({
@@ -60,6 +70,10 @@ const loading = ref(false)
 // 饼图实例
 let pieChartInstance = null
 const pieChartRef = ref(null)
+
+// 热卖排行柱状图实例
+let barChartInstance = null
+const barChartRef = ref(null)
 
 // ==================== 趋势折线图 ====================
 
@@ -223,6 +237,95 @@ const updatePieChart = () => {
   pieChartInstance.setOption(option, true)
 }
 
+// ==================== 热卖 Top 10 柱状图 ====================
+
+const initBarChart = () => {
+  if (!barChartRef.value) return
+  barChartInstance = echarts.init(barChartRef.value)
+  window.addEventListener('resize', () => {
+    barChartInstance?.resize()
+  })
+  updateBarChart()
+}
+
+const updateBarChart = async () => {
+  if (!barChartInstance) return
+  try {
+    const res = await getTopSales()
+    const list = res.data || []
+
+    // 反转数组使排名第一的在最上方
+    const reversed = [...list].reverse()
+    const names = reversed.map(p => p.name.length > 12 ? p.name.slice(0, 12) + '...' : p.name)
+    const values = reversed.map(p => p.sales || 0)
+    const maxVal = Math.max(...values, 1)
+
+    const option = {
+      tooltip: {
+        trigger: 'axis',
+        axisPointer: { type: 'shadow' },
+        formatter: function (params) {
+          const idx = list.length - 1 - params[0].dataIndex
+          const p = list[idx]
+          return `<strong>#${idx + 1} ${p.name}</strong><br/>
+                  💰 ¥${p.price?.toFixed(2) || '0.00'}<br/>
+                  📦 销量 ${p.sales || 0}<br/>
+                  📋 库存 ${p.stock ?? '-'}`
+        }
+      },
+      grid: {
+        left: '3%',
+        right: '12%',
+        top: '5%',
+        bottom: '5%'
+      },
+      xAxis: {
+        type: 'value',
+        max: maxVal * 1.15,
+        axisLabel: { show: false },
+        splitLine: { lineStyle: { color: '#f0f0f0' } }
+      },
+      yAxis: {
+        type: 'category',
+        data: names,
+        axisLine: { show: false },
+        axisTick: { show: false },
+        axisLabel: {
+          fontSize: 13,
+          color: '#333',
+          fontWeight: 500
+        }
+      },
+      series: [{
+        type: 'bar',
+        data: values.map((v, i) => ({
+          value: v,
+          itemStyle: {
+            color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
+              { offset: 0, color: '#FF6B35' },
+              { offset: 1, color: '#FFB088' }
+            ]),
+            borderRadius: [0, 6, 6, 0]
+          }
+        })),
+        barWidth: 20,
+        label: {
+          show: true,
+          position: 'right',
+          fontSize: 12,
+          color: '#666',
+          formatter: function (params) {
+            return `已售 ${params.value}`
+          }
+        }
+      }]
+    }
+    barChartInstance.setOption(option, true)
+  } catch (error) {
+    console.error('获取热卖排行失败', error)
+  }
+}
+
 // 监听 statusDistribution prop 变化
 watch(() => props.statusDistribution, () => {
   updatePieChart()
@@ -241,6 +344,7 @@ onMounted(() => {
   nextTick(() => {
     initChart()
     initPieChart()
+    initBarChart()
     startPolling()
   })
 })
@@ -250,6 +354,7 @@ onBeforeUnmount(() => {
   window.removeEventListener('resize', () => {})
   chartInstance?.dispose()
   pieChartInstance?.dispose()
+  barChartInstance?.dispose()
 })
 </script>
 
