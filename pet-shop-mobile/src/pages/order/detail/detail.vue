@@ -15,9 +15,14 @@
         <text class="label">总金额</text>
         <text class="value price">¥{{ order.totalAmount }}</text>
       </view>
+      <!-- 会员折扣 -->
+      <view class="detail-item discount-row" v-if="discount > 0">
+        <text class="label">会员折扣</text>
+        <text class="value discount-value">-¥{{ discount }}</text>
+      </view>
       <view class="detail-item">
         <text class="label">实付金额</text>
-        <text class="value">¥{{ order.payAmount || order.totalAmount }}</text>
+        <text class="value pay-amount">¥{{ order.payAmount || order.totalAmount }}</text>
       </view>
       <view class="detail-item">
         <text class="label">支付方式</text>
@@ -47,13 +52,20 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { getOrderDetailApi } from '@/api/order'
 import { orders as mockOrders } from '@/mock'
 
 const order = ref(null)
 const loading = ref(false)
+
+const discount = computed(() => {
+  if (!order.value) return 0
+  const total = parseFloat(order.value.totalAmount || 0)
+  const pay = parseFloat(order.value.payAmount || total)
+  return (total - pay).toFixed(2)
+})
 
 const statusMap = { 0: '待支付', 1: '待发货', 2: '待收货', 3: '待评价', 4: '已完成', '-1': '已取消', '-2': '退单中', '-3': '退单完成', '-4': '已退单' }
 
@@ -112,6 +124,23 @@ function goBack() {
   color: #FF6B35;
   font-weight: 700;
   font-size: 32rpx;
+}
+
+.discount-row {
+  background: #FFF7ED;
+  border-radius: 8rpx;
+  margin: 4rpx 0;
+}
+.discount-value {
+  color: #10B981;
+  font-weight: 600;
+  font-size: 28rpx;
+}
+
+.pay-amount {
+  font-weight: 700;
+  font-size: 32rpx;
+  color: #FF6B35;
 }
 
 .status-badge {

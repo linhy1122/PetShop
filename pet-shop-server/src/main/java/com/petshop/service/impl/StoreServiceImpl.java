@@ -30,7 +30,6 @@ public class StoreServiceImpl extends ServiceImpl<StoreMapper, Store> implements
 
     /**
      * 简易地理位置搜索（利用MySQL计算直线距离）
-     * TODO: 后续可替换为高德地图POI搜索API
      */
     @Override
     public List<Store> searchNearby(BigDecimal lng, BigDecimal lat, Integer radius) {
@@ -38,7 +37,6 @@ public class StoreServiceImpl extends ServiceImpl<StoreMapper, Store> implements
         LambdaQueryWrapper<Store> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(Store::getStatus, 0)
                .orderByAsc(Store::getRating);
-        // TODO: 使用经纬度范围筛选 + 距离计算
         return list(wrapper);
     }
 

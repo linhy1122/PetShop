@@ -15,7 +15,8 @@
     {
       "path": "pages/product/list/list",
       "style": {
-        "navigationBarTitleText": "宠物商城"
+        "navigationBarTitleText": "宠物商城",
+        "onReachBottomDistance": 100
       }
     },
     {

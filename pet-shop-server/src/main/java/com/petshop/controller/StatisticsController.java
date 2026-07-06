@@ -108,6 +108,16 @@ public class StatisticsController {
         return Result.ok(data);
     }
 
+    /** 热卖 Top 10 */
+    @GetMapping("/top-sales")
+    public Result<List<Product>> topSales() {
+        LambdaQueryWrapper<Product> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(Product::getStatus, 1)
+               .orderByDesc(Product::getSales)
+               .last("LIMIT 10");
+        return Result.ok(productService.list(wrapper));
+    }
+
     /** 获取近7日趋势数据 */
     @GetMapping("/trend")
     public Result<Map<String, Object>> trend() {

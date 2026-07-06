@@ -18,7 +18,13 @@
           <el-tag :type="statusType(order.status)">{{ statusText(order.status) }}</el-tag>
         </div>
         <div class="order-body">
-          <p>总金额：<span class="price">¥{{ order.totalAmount }}</span></p>
+          <p>
+            总金额：<span class="price">¥{{ memberLevel > 0 ? order.payAmount || order.totalAmount : order.totalAmount }}</span>
+            <span v-if="memberLevel > 0 && order.payAmount && order.payAmount !== order.totalAmount" class="member-info">
+              <span class="original-price">原价 ¥{{ order.totalAmount }}</span>
+              <span class="discount-tag">{{ discountDesc }}</span>
+            </span>
+          </p>
           <p>下单时间：{{ order.createTime }}</p>
         </div>
         <div class="order-actions">
@@ -42,7 +48,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onActivated, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted, onActivated, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { getUserOrdersApi, payOrderApi, cancelOrderApi, confirmReceiveApi, applyRefundApi } from '@/api/order'
@@ -52,6 +58,11 @@ const router = useRouter()
 const userStore = useUserStore()
 const orders = ref([])
 const activeTab = ref('all')
+
+const DISCOUNTS = { 0: 1, 1: 0.95, 2: 0.9, 3: 0.85 }
+const DESC = { 0: '', 1: '银卡95折', 2: '金卡9折', 3: '钻石85折' }
+const memberLevel = computed(() => userStore.userInfo?.memberLevel ?? 0)
+const discountDesc = computed(() => DESC[memberLevel.value])
 
 const statusMap = { 0: '待支付', 1: '待发货', 2: '待收货', 3: '待评价', 4: '已完成',
   '-1': '已取消', '-2': '退单中', '-3': '退单完成', '-4': '已退单' }
@@ -139,5 +150,8 @@ h2 { margin-bottom: 20px; }
 .order-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
 .order-body p { line-height: 2; color: #666; }
 .order-body .price { color: #f56c6c; font-weight: bold; }
+.member-info { font-size: 12px; color: #999; margin-left: 6px; }
+.original-price { text-decoration: line-through; margin-right: 4px; }
+.discount-tag { color: #e8734a; background: #fff5f0; padding: 0px 6px; border-radius: 4px; font-size: 11px; }
 .order-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 12px; }
 </style>

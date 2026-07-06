@@ -31,7 +31,7 @@
                              :max="item.productType === 1 ? 1 : item.stock"
                              size="small"
                              @change="handleQuantity(item)" />
-            <span class="item-subtotal">¥{{ (item.price * item.quantity).toFixed(2) }}</span>
+            <span class="item-subtotal">¥ 会员价{{ (getMemberPrice(item.price) * item.quantity).toFixed(2) }}</span>
             <el-button type="danger" size="small" :icon="Delete"
                        @click="handleRemove(item)">删除</el-button>
           </div>
@@ -49,7 +49,8 @@
           </div>
           <div class="footer-right">
             <div class="total">
-              合计：<span class="total-price">¥{{ totalPrice }}</span>
+              合计：<span class="total-price">¥{{ memberLevel > 0 ? memberTotalPrice : totalPrice }}</span>
+            
             </div>
             <el-button type="primary" size="large" :disabled="totalPrice === 0"
                        @click="handleCheckout">去结算</el-button>
@@ -71,7 +72,14 @@
             <el-input v-model="remark" type="textarea" placeholder="选填" />
           </el-form-item>
           <el-form-item label="应付金额">
-            <span style="font-size: 22px; color: #f56c6c; font-weight: bold;">¥{{ totalPrice }}</span>
+            <div>
+              <span style="font-size: 22px; color: #f56c6c; font-weight: bold;">
+                ¥{{ memberLevel > 0 ? memberTotalPrice : totalPrice }}
+              </span>
+              <div v-if="memberLevel > 0" style="font-size: 13px; color: #999; margin-top: 4px;">
+                原价 ¥{{ totalPrice }}，会员{{ discountDesc }}
+              </div>
+            </div>
           </el-form-item>
         </el-form>
         <template #footer>
@@ -97,6 +105,17 @@ const router = useRouter()
 const userStore = useUserStore()
 const cartStore = useCartStore()
 
+const DISCOUNTS = { 0: 1, 1: 0.95, 2: 0.9, 3: 0.85 }
+const DESC = { 0: '', 1: '银卡95折', 2: '金卡9折', 3: '钻石85折' }
+
+const memberLevel = computed(() => userStore.userInfo?.memberLevel ?? 0)
+const discountDesc = computed(() => DESC[memberLevel.value])
+
+function getMemberPrice(price) {
+  if (!price) return '0.00'
+  return (parseFloat(price) * DISCOUNTS[memberLevel.value]).toFixed(2)
+}
+
 const cartItems = ref([])
 const addresses = ref([])
 const dialogVisible = ref(false)
@@ -113,6 +132,13 @@ const totalPrice = computed(() => {
   return cartItems.value
     .filter(i => i.checked === 1 && i.productStatus !== 0)
     .reduce((sum, i) => sum + i.price * i.quantity, 0)
+    .toFixed(2)
+})
+
+const memberTotalPrice = computed(() => {
+  return cartItems.value
+    .filter(i => i.checked === 1 && i.productStatus !== 0)
+    .reduce((sum, i) => sum + i.price * i.quantity * DISCOUNTS[memberLevel.value], 0)
     .toFixed(2)
 })
 
@@ -240,9 +266,10 @@ h2 { margin-bottom: 20px; }
 .item-info { flex: 1; }
 .item-info h4 { font-size: 15px; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
 .item-price { color: #f56c6c; font-weight: bold; }
+.member-tag { font-size: 11px; color: #e8734a; background: #fff5f0; padding: 1px 6px; border-radius: 4px; margin-left: 4px; }
 .stock-warn { color: #e6a23c; font-size: 12px; }
 .cart-item.offline { opacity: 0.6; background: #f5f5f5; }
-.item-subtotal { font-weight: bold; min-width: 80px; text-align: right; }
+.item-subtotal { color: #e8734a; font-size: 13px; margin-top: 2px;}
 .cart-footer {
   display: flex; align-items: center; justify-content: space-between;
   padding: 20px; background: #fff; border-radius: 12px; margin-top: 20px;
@@ -251,4 +278,5 @@ h2 { margin-bottom: 20px; }
 .footer-left { display: flex; align-items: center; gap: 12px; }
 .footer-right { display: flex; align-items: center; gap: 16px; }
 .total-price { font-size: 24px; color: #f56c6c; font-weight: bold; }
+.total-discount { font-size: 13px; color: #999; margin-left: 6px; }
 </style>
