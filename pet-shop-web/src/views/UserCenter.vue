@@ -8,6 +8,12 @@
             <el-form-item label="用户名">
               <el-input :model-value="userStore.userInfo?.nickname" disabled />
             </el-form-item>
+            <el-form-item label="会员等级">
+              <span :class="'level-tag level-' + (userStore.userInfo?.memberLevel || 0)">
+                {{ memberLevelName }}
+              </span>
+              <span style="margin-left:10px;color:#999;font-size:13px">{{ discountTip }}</span>
+            </el-form-item>
             <el-form-item label="昵称">
               <el-input v-model="userForm.nickname" />
             </el-form-item>
@@ -88,7 +94,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { useUserStore } from '@/stores/user'
 import { updateProfileApi, updatePasswordApi } from '@/api/user'
 import request from '@/utils/request'
@@ -96,6 +102,11 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { regionData } from '@/utils/regionData'
 
 const userStore = useUserStore()
+
+const LEVELS = { 0: '普通用户', 1: '银卡会员', 2: '金卡会员', 3: '钻石会员' }
+const DISCOUNTS = { 0: '', 1: '享95折优惠', 2: '享9折优惠', 3: '享85折优惠' }
+const memberLevelName = computed(() => LEVELS[userStore.userInfo?.memberLevel ?? 0])
+const discountTip = computed(() => DISCOUNTS[userStore.userInfo?.memberLevel ?? 0])
 const addresses = ref([])
 const addrDialog = ref(false)
 const editingAddr = ref(null)
@@ -228,5 +239,41 @@ h2 { margin-bottom: 20px; }
 .addr-actions :deep(.el-button + .el-button) { margin-left: 0; }
 @media (max-width: 600px) {
   .addr-card :deep(.el-card__body) { padding: 18px 20px; }
+}
+
+.level-tag {
+  display: inline-block;
+  padding: 4px 16px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.level-0 { background: #f4f4f5; color: #909399; border: 1px solid #e9e9eb; }
+.level-1 { background: linear-gradient(135deg, #C0C0C0, #E8E8E8); color: #5a5a5a; border: 1px solid #aaa; }
+.level-2 { background: linear-gradient(135deg, #FFD700, #FFEC80); color: #8B6914; border: 1px solid #DAA520; }
+.level-3 {
+  background: linear-gradient(135deg, #1a0533, #2d1b69, #4a2c8a);
+  color: #E0B0FF;
+  border: 1px solid #6a3fb5;
+  box-shadow: 0 0 12px rgba(160,80,255,0.5), 0 0 30px rgba(160,80,255,0.2);
+  animation: diamond-glow 2s ease-in-out infinite;
+  position: relative;
+  overflow: hidden;
+}
+.level-3::before {
+  content: '';
+  position: absolute;
+  top: -50%; left: -50%;
+  width: 200%; height: 200%;
+  background: linear-gradient(45deg, transparent 40%, rgba(255,255,255,0.15) 50%, transparent 60%);
+  animation: diamond-sweep 3s linear infinite;
+}
+@keyframes diamond-glow {
+  0%, 100% { box-shadow: 0 0 12px rgba(160,80,255,0.5), 0 0 30px rgba(160,80,255,0.2); }
+  50% { box-shadow: 0 0 20px rgba(180,120,255,0.8), 0 0 50px rgba(160,80,255,0.4), 0 0 80px rgba(120,40,220,0.2); }
+}
+@keyframes diamond-sweep {
+  0% { transform: translateX(-100%) rotate(45deg); }
+  100% { transform: translateX(100%) rotate(45deg); }
 }
 </style>

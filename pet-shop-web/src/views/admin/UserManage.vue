@@ -84,9 +84,11 @@
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="会员等级" width="110" align="center">
+      <el-table-column label="会员等级" width="120" align="center">
         <template #default="{ row }">
-          <el-tag type="warning" effect="plain">{{ formatMemberLevel(row.memberLevel) }}</el-tag>
+          <span :class="'level-tag level-' + (row.memberLevel || 0)">
+            {{ formatMemberLevel(row.memberLevel) }}
+          </span>
         </template>
       </el-table-column>
       <el-table-column label="状态" width="120" align="center">
@@ -276,7 +278,7 @@ import {
 } from '@/api/user'
 
 const memberLevelOptions = [
-  { value: 0, label: '普通会员' },
+  { value: 0, label: '普通用户' },
   { value: 1, label: '银卡会员' },
   { value: 2, label: '金卡会员' },
   { value: 3, label: '钻石会员' }
@@ -568,7 +570,7 @@ function formatRole(role) {
 }
 
 function formatMemberLevel(level) {
-  return memberLevelOptions.find(item => item.value === Number(level))?.label || '普通会员'
+  return memberLevelOptions.find(item => item.value === Number(level))?.label || '普通用户'
 }
 
 function formatDateTime(value) {
@@ -609,5 +611,52 @@ function getAvatarText(row) {
 
 .avatar-preview {
   margin-top: 10px;
+}
+
+/* 会员等级标签 */
+.level-tag {
+  display: inline-block;
+  padding: 3px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+.level-0 { background: #f4f4f5; color: #909399; border: 1px solid #e9e9eb; }
+.level-1 { background: linear-gradient(135deg, #C0C0C0, #E8E8E8); color: #5a5a5a; border: 1px solid #aaa; }
+.level-2 { background: linear-gradient(135deg, #FFD700, #FFEC80); color: #8B6914; border: 1px solid #DAA520; }
+.level-3 {
+  background: linear-gradient(135deg, #1a0533, #2d1b69, #4a2c8a);
+  color: #E0B0FF;
+  border: 1px solid #6a3fb5;
+  box-shadow: 0 0 12px rgba(160,80,255,0.5), 0 0 30px rgba(160,80,255,0.2);
+  animation: cosmic-shimmer 2s ease-in-out infinite;
+  position: relative;
+  overflow: hidden;
+}
+.level-3::before {
+  content: '';
+  position: absolute;
+  top: -50%; left: -50%;
+  width: 200%; height: 200%;
+  background: linear-gradient(45deg, transparent 40%, rgba(255,255,255,0.15) 50%, transparent 60%);
+  animation: cosmic-sweep 3s linear infinite;
+}
+.level-3::after {
+  content: '✨';
+  position: absolute;
+  animation: cosmic-sparkle 1.5s ease-in-out infinite;
+}
+@keyframes cosmic-shimmer {
+  0%, 100% { box-shadow: 0 0 12px rgba(160,80,255,0.5), 0 0 30px rgba(160,80,255,0.2); }
+  50% { box-shadow: 0 0 20px rgba(180,120,255,0.8), 0 0 50px rgba(160,80,255,0.4), 0 0 80px rgba(120,40,220,0.2); }
+}
+@keyframes cosmic-sweep {
+  0% { transform: translateX(-100%) rotate(45deg); }
+  100% { transform: translateX(100%) rotate(45deg); }
+}
+@keyframes cosmic-sparkle {
+  0%, 100% { opacity: 0; transform: translate(0, -50%); }
+  50% { opacity: 1; transform: translate(2px, -60%); }
 }
 </style>

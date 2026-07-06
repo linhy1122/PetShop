@@ -178,7 +178,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                 "token", token,
                 "userId", user.getId(),
                 "nickname", user.getNickname(),
-                "role", user.getRole()
+                "role", user.getRole(),
+                "memberLevel", user.getMemberLevel() != null ? user.getMemberLevel() : 0
         );
     }
 
@@ -224,7 +225,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                 "token", token,
                 "userId", user.getId(),
                 "nickname", user.getNickname(),
-                "role", user.getRole()
+                "role", user.getRole(),
+                "memberLevel", user.getMemberLevel() != null ? user.getMemberLevel() : 0
         );
     }
 

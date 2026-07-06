@@ -17,7 +17,12 @@
           <el-descriptions-item label="总金额">
             <span class="price">¥{{ order.totalAmount }}</span>
           </el-descriptions-item>
-          <el-descriptions-item label="实付金额">¥{{ order.payAmount || '0.00' }}</el-descriptions-item>
+          <el-descriptions-item v-if="discount > 0" label="会员折扣">
+            <span class="discount-text">-¥{{ discount }}</span>
+          </el-descriptions-item>
+          <el-descriptions-item label="实付金额">
+            <span class="pay-text">¥{{ order.payAmount || '0.00' }}</span>
+          </el-descriptions-item>
           <el-descriptions-item label="支付方式">{{ order.payMethod || '未支付' }}</el-descriptions-item>
           <el-descriptions-item label="支付时间">{{ order.payTime || '-' }}</el-descriptions-item>
           <el-descriptions-item label="创建时间">{{ order.createTime }}</el-descriptions-item>
@@ -156,7 +161,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { getOrderDetailApi, payOrderApi, cancelOrderApi, confirmReceiveApi, applyRefundApi } from '@/api/order'
@@ -169,6 +174,12 @@ const router = useRouter()
 const userStore = useUserStore()
 
 const order = ref(null)
+const discount = computed(() => {
+  if (!order.value) return 0
+  const total = parseFloat(order.value.totalAmount || 0)
+  const pay = parseFloat(order.value.payAmount || total)
+  return (total - pay).toFixed(2)
+})
 const items = ref([])
 const logs = ref([])
 const loading = ref(false)
@@ -386,6 +397,8 @@ async function handleDeleteSingleReview(review) {
 .header h2 { margin: 0; }
 .section { margin-bottom: 20px; }
 .price { color: #f56c6c; font-weight: bold; font-size: 16px; }
+.discount-text { color: #67C23A; font-weight: 600; font-size: 15px; }
+.pay-text { color: #f56c6c; font-weight: bold; font-size: 18px; }
 .item-row { display: flex; align-items: center; gap: 16px; padding: 12px 0; border-bottom: 1px solid #f0f0f0; }
 .item-row:last-child { border-bottom: none; }
 .item-img { width: 64px; height: 64px; object-fit: cover; border-radius: 8px; }
