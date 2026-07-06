@@ -10,13 +10,12 @@ export const getStatisticsTrend = () => {
   return request.get('/admin/statistics/trend')
 }
 
-<<<<<<< HEAD
 /** 获取指定月份每日营收趋势数据 */
 export const getMonthlyDaily = (yearMonth) => {
   return request.get('/admin/statistics/monthly-daily', { params: { yearMonth } })
-=======
+}
+
 /** 获取热卖 Top 10 */
 export const getTopSales = () => {
   return request.get('/admin/statistics/top-sales')
->>>>>>> f023f509b90c7c0035836862e1cbc44e70388ebc
 }

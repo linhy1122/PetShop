@@ -138,12 +138,15 @@ const loading = ref(false)
 let pieChartInstance = null
 const pieChartRef = ref(null)
 
-<<<<<<< HEAD
 // ==================== 月度趋势图实例 ====================
 let gmvChartInstance = null
 let revenueChartInstance = null
 let refundChartInstance = null
 let netRevenueChartInstance = null
+
+// 热卖排行柱状图实例
+let barChartInstance = null
+const barChartRef = ref(null)
 
 // ==================== 月度趋势图辅助方法 ====================
 
@@ -225,13 +228,6 @@ const updateAllMonthlyCharts = () => {
 }
 
 // ==================== 7日趋势折线图 ====================
-=======
-// 热卖排行柱状图实例
-let barChartInstance = null
-const barChartRef = ref(null)
-
-// ==================== 趋势折线图 ====================
->>>>>>> f023f509b90c7c0035836862e1cbc44e70388ebc
 
 const fetchTrendData = async () => {
   const res = await getStatisticsTrend()
@@ -353,10 +349,8 @@ const updatePieChart = () => {
   pieChartInstance.setOption(option, true)
 }
 
-<<<<<<< HEAD
 // ==================== Watch ====================
 
-=======
 // ==================== 热卖 Top 10 柱状图 ====================
 
 const initBarChart = () => {
@@ -447,7 +441,6 @@ const updateBarChart = async () => {
 }
 
 // 监听 statusDistribution prop 变化
->>>>>>> f023f509b90c7c0035836862e1cbc44e70388ebc
 watch(() => props.statusDistribution, () => {
   updatePieChart()
 }, { deep: true })
@@ -485,14 +478,11 @@ onBeforeUnmount(() => {
   window.removeEventListener('resize', () => {})
   chartInstance?.dispose()
   pieChartInstance?.dispose()
-<<<<<<< HEAD
   gmvChartInstance?.dispose()
   revenueChartInstance?.dispose()
   refundChartInstance?.dispose()
   netRevenueChartInstance?.dispose()
-=======
   barChartInstance?.dispose()
->>>>>>> f023f509b90c7c0035836862e1cbc44e70388ebc
 })
 </script>
 

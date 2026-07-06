@@ -1,30 +1,46 @@
 <template>
   <div>
-    <h3>管理控制台</h3>
+    <div class="dashboard-header">
+      <h3>管理控制台</h3>
+      <div class="month-switcher">
+        <el-date-picker
+          v-model="selectedMonth"
+          type="month"
+          placeholder="选择月份"
+          format="YYYY年MM月"
+          value-format="YYYY-MM"
+          :disabled-date="disabledDate"
+          @change="onMonthChange"
+        />
+        <el-button v-if="!isCurrentMonth" type="primary" size="small" @click="goToCurrentMonth">
+          回到本月
+        </el-button>
+      </div>
+    </div>
 
     <!-- 营收统计卡片（全部以月为计量单位） -->
     <el-row :gutter="20" style="margin-top: 20px">
       <el-col :span="6">
         <el-card shadow="hover" class="revenue-card" @click="scrollTo('gmv')">
-          <el-statistic title="本月GMV" :value="stats.monthGmv" prefix="¥" :precision="2" />
+          <el-statistic :title="monthLabel + 'GMV'" :value="stats.monthGmv" prefix="¥" :precision="2" />
           <div class="card-tip">点击查看每日趋势</div>
         </el-card>
       </el-col>
       <el-col :span="6">
         <el-card shadow="hover" class="revenue-card" @click="scrollTo('revenue')">
-          <el-statistic title="本月实收" :value="stats.monthRevenue" prefix="¥" :precision="2" />
+          <el-statistic :title="monthLabel + '实收'" :value="stats.monthRevenue" prefix="¥" :precision="2" />
           <div class="card-tip">点击查看每日趋势</div>
         </el-card>
       </el-col>
       <el-col :span="6">
         <el-card shadow="hover" class="revenue-card" @click="scrollTo('refund')">
-          <el-statistic title="本月退款" :value="stats.monthRefund" prefix="¥" :precision="2" />
+          <el-statistic :title="monthLabel + '退款'" :value="stats.monthRefund" prefix="¥" :precision="2" />
           <div class="card-tip">点击查看每日趋势</div>
         </el-card>
       </el-col>
       <el-col :span="6">
         <el-card shadow="hover" class="revenue-card" @click="scrollTo('netRevenue')">
-          <el-statistic title="本月净收" :value="stats.monthNetRevenue" prefix="¥" :precision="2" />
+          <el-statistic :title="monthLabel + '净收'" :value="stats.monthNetRevenue" prefix="¥" :precision="2" />
           <div class="card-tip">点击查看每日趋势</div>
         </el-card>
       </el-col>
@@ -51,16 +67,46 @@
       ref="chartsRef"
       :status-distribution="statusDistribution"
       :monthly-daily="monthlyDaily"
+      :month-label="monthLabel"
     />
 
   </div>
 </template>
 
 <script setup>
-import { reactive, ref, onMounted } from 'vue'
+import { reactive, ref, computed, onMounted } from 'vue'
 import AdminCharts from '@/components/AdminCharts.vue'
 import { getStatisticsOverview, getMonthlyDaily } from '@/api/admin'
 
+// ==================== 月份选择 ====================
+const now = new Date()
+const thisMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+const selectedMonth = ref(thisMonthStr)
+
+const monthLabel = computed(() => {
+  const [y, m] = selectedMonth.value.split('-')
+  return `${y}年${parseInt(m)}月`
+})
+
+const isCurrentMonth = computed(() => selectedMonth.value === thisMonthStr)
+
+/** 禁止选择未来月份 */
+function disabledDate(date) {
+  return date.getTime() > Date.now()
+}
+
+function onMonthChange() {
+  loadStats()
+  loadMonthlyDaily()
+}
+
+function goToCurrentMonth() {
+  selectedMonth.value = thisMonthStr
+  loadStats()
+  loadMonthlyDaily()
+}
+
+// ==================== 统计数据 ====================
 const stats = reactive({
   products: 0, stores: 0, orders: 0, users: 0,
   monthGmv: 0, monthRevenue: 0, monthRefund: 0, monthNetRevenue: 0
@@ -73,7 +119,7 @@ const chartsRef = ref(null)
 // 从后端API加载统计数据
 const loadStats = async () => {
   try {
-    const res = await getStatisticsOverview()
+    const res = await getStatisticsOverview(selectedMonth.value)
     if (res.data) {
       stats.products = res.data.products || 0
       stats.stores = res.data.stores || 0
@@ -93,7 +139,7 @@ const loadStats = async () => {
 // 加载当月每日趋势数据
 const loadMonthlyDaily = async () => {
   try {
-    const res = await getMonthlyDaily()
+    const res = await getMonthlyDaily(selectedMonth.value)
     if (res.data) {
       monthlyDaily.value = res.data
     }
@@ -123,6 +169,21 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.dashboard-header h3 {
+  margin: 0;
+}
+.month-switcher {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
 .revenue-card {
   cursor: pointer;
   transition: all 0.3s ease;

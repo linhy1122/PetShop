@@ -149,6 +149,13 @@ router.beforeEach((to, from, next) => {
   const token = localStorage.getItem('token')
   if (to.meta.requireAuth && !token) {
     next({ path: '/login', query: { redirect: to.fullPath } })
+  } else if (to.meta.requireAdmin) {
+    const userInfo = JSON.parse(localStorage.getItem('userInfo') || 'null')
+    if (!token || userInfo?.role !== 'admin') {
+      next({ path: '/login', query: { redirect: to.fullPath } })
+    } else {
+      next()
+    }
   } else {
     next()
   }
