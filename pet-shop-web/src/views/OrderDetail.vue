@@ -54,7 +54,12 @@
           <span class="item-subtotal">¥{{ item.subtotal }}</span>
         </div>
         <div class="item-summary">
-          共 {{ items.length }} 件商品，合计：<span class="price">¥{{ order?.totalAmount }}</span>
+          共 {{ items.length }} 件商品，合计：
+          <span class="price">¥{{ memberLevel > 0 ? (order?.payAmount || order?.totalAmount) : order?.totalAmount }}</span>
+          <span v-if="memberLevel > 0 && discount > 0" style="font-size:13px;color:#999;margin-left:6px;">
+            <span style="text-decoration:line-through;">原价 ¥{{ order?.totalAmount }}</span>
+            <span class="member-tag">{{ discountDesc }}</span>
+          </span>
         </div>
       </el-card>
 
@@ -180,6 +185,11 @@ const discount = computed(() => {
   const pay = parseFloat(order.value.payAmount || total)
   return (total - pay).toFixed(2)
 })
+
+const DISCOUNTS = { 0: 1, 1: 0.95, 2: 0.9, 3: 0.85 }
+const DESC = { 0: '', 1: '银卡95折', 2: '金卡9折', 3: '钻石85折' }
+const memberLevel = computed(() => userStore.userInfo?.memberLevel ?? 0)
+const discountDesc = computed(() => DESC[memberLevel.value])
 const items = ref([])
 const logs = ref([])
 const loading = ref(false)
@@ -420,4 +430,5 @@ async function handleDeleteSingleReview(review) {
 .review-images { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
 .review-image { width: 80px; height: 80px; border-radius: 6px; overflow: hidden; }
 .review-image :deep(img) { object-fit: cover; }
+.member-tag { color: #e8734a; background: #fff5f0; padding: 1px 6px; border-radius: 4px; font-size: 11px; margin-left: 4px; }
 </style>

@@ -52,7 +52,7 @@ public class RecommendServiceImpl implements RecommendService {
                     }
                 }
             }
-        }
+        } 
 
         // 4. CF 推荐商品按得分排序
         List<Long> cfIds = scores.entrySet().stream()
