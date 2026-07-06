@@ -22,6 +22,11 @@
             <span class="price">¥{{ product.price }}</span>
             <span class="sales">已售 {{ product.sales }}</span>
           </div>
+          <div class="member-price" v-if="isLoggedIn && memberLevel > 0">
+            <span class="member-tag">{{ levelName }}</span>
+            <span class="member-value">¥{{ memberPrice }}</span>
+            <span class="member-discount">（{{ discountDesc }}）</span>
+          </div>
           <div class="meta" v-if="product.productType === 1">
             <p>品种：{{ product.breed || '未知' }}</p>
             <p>年龄：{{ product.age || '未知' }}</p>
@@ -138,6 +143,20 @@ import { Plus } from '@element-plus/icons-vue'
 const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
+
+const DISCOUNTS = { 0: 1, 1: 0.95, 2: 0.9, 3: 0.85 }
+const LEVELS = { 0: '普通用户', 1: '银卡会员', 2: '金卡会员', 3: '钻石会员' }
+const DESC = { 0: '', 1: '95折', 2: '9折', 3: '85折' }
+
+const isLoggedIn = computed(() => userStore.isLoggedIn())
+const memberLevel = computed(() => userStore.userInfo?.memberLevel ?? 0)
+const levelName = computed(() => LEVELS[memberLevel.value])
+const discountDesc = computed(() => DESC[memberLevel.value])
+const memberPrice = computed(() => {
+  const p = product.value
+  if (!p?.price) return '0.00'
+  return (parseFloat(p.price) * DISCOUNTS[memberLevel.value]).toFixed(2)
+})
 
 const product = ref(null)
 const reviews = ref([])
@@ -347,8 +366,20 @@ async function handleSubmitReview() {
 }
 .info { flex: 1; }
 .info h1 { font-size: 24px; margin-bottom: 12px; }
-.price-section { margin: 20px 0; }
+.price-section { margin: 20px 0 12px; }
 .price { font-size: 28px; color: #f56c6c; font-weight: bold; margin-right: 16px; }
+.member-price {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 16px; margin-bottom: 12px;
+  background: linear-gradient(135deg, #FFF7ED, #FFF1F2);
+  border-radius: 8px; border: 1px solid #FFE4D0;
+}
+.member-tag {
+  font-size: 12px; color: #fff; background: #f56c6c;
+  padding: 2px 10px; border-radius: 4px;
+}
+.member-value { font-size: 24px; font-weight: 800; color: #f56c6c; }
+.member-discount { font-size: 14px; color: #e8734a; }
 .sales { color: #999; font-size: 14px; }
 .meta { margin: 16px 0; }
 .meta p { line-height: 2; color: #666; }

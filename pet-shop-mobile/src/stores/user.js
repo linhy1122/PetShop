@@ -14,7 +14,8 @@ export const useUserStore = defineStore('user', () => {
       userId: res.data.userId,
       nickname: res.data.nickname,
       role: res.data.role,
-      avatar: res.data.avatar || ''
+      avatar: res.data.avatar || '',
+      memberLevel: res.data.memberLevel ?? 0
     }
     uni.setStorageSync('token', token.value)
     uni.setStorageSync('userInfo', JSON.stringify(userInfo.value))
@@ -47,7 +48,8 @@ export const useUserStore = defineStore('user', () => {
       userId: res.data.userId,
       nickname: res.data.nickname,
       role: res.data.role,
-      avatar: res.data.avatar || ''
+      avatar: res.data.avatar || '',
+      memberLevel: res.data.memberLevel ?? 0
     }
     uni.setStorageSync('token', token.value)
     uni.setStorageSync('userInfo', JSON.stringify(userInfo.value))

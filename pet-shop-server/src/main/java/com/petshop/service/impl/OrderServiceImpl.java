@@ -11,6 +11,7 @@ import com.petshop.service.CartService;
 import com.petshop.service.OrderItemService;
 import com.petshop.service.OrderService;
 import com.petshop.service.ProductService;
+import com.petshop.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,6 +43,9 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
     @Autowired
     private OrderLogMapper orderLogMapper;
 
+    @Autowired
+    private UserService userService;
+
     @Override
     @Transactional
     public Order createOrder(Long userId, Long addressId, String remark) {
@@ -54,6 +58,10 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         if (checkedItems.isEmpty()) {
             throw new RuntimeException("购物车中没有选中的商品");
         }
+
+        // 获取用户会员等级
+        User user = userService.getById(userId);
+        int memberLevel = user != null && user.getMemberLevel() != null ? user.getMemberLevel() : 0;
 
         // 计算总金额 + 校验商品可购买
         BigDecimal totalAmount = BigDecimal.ZERO;
@@ -69,13 +77,16 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             totalAmount = totalAmount.add(product.getPrice().multiply(BigDecimal.valueOf(cart.getQuantity())));
         }
 
+        // 计算会员折扣后实付金额
+        BigDecimal payAmount = com.petshop.common.MemberLevel.getMemberPrice(totalAmount, memberLevel);
+
         // 创建订单
         Order order = new Order();
         order.setOrderNo(IdUtil.getSnowflakeNextIdStr());
         order.setUserId(userId);
         order.setAddressId(addressId);
         order.setTotalAmount(totalAmount);
-        order.setPayAmount(totalAmount);
+        order.setPayAmount(payAmount);
         order.setStatus(0);
         order.setRemark(remark);
 
@@ -118,6 +129,30 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         order.setPayTime(LocalDateTime.now());
         updateById(order);
         saveOrderLog(orderId, "用户", fromStatus, 1, "支付成功，方式：" + payMethod);
+
+        // 会员自动升级：根据累计消费金额重新计算等级
+        try {
+            User user = userService.getById(order.getUserId());
+            if (user != null) {
+                LambdaQueryWrapper<Order> wrapper = new LambdaQueryWrapper<>();
+                wrapper.eq(Order::getUserId, user.getId())
+                       .in(Order::getStatus, 1, 2, 3, 4);
+                List<Order> paidOrders = list(wrapper);
+                BigDecimal totalSpent = paidOrders.stream()
+                        .map(o -> o.getPayAmount() != null ? o.getPayAmount() : BigDecimal.ZERO)
+                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+                int newLevel = com.petshop.common.MemberLevel.calcLevel(totalSpent);
+                if (newLevel > (user.getMemberLevel() != null ? user.getMemberLevel() : 0)) {
+                    user.setMemberLevel(newLevel);
+                    userService.updateById(user);
+                    saveOrderLog(orderId, "系统", 1, 1,
+                            "会员升级：" + com.petshop.common.MemberLevel.getName(newLevel));
+                }
+            }
+        } catch (Exception e) {
+            // 升级失败不影响支付流程
+            log.error("会员自动升级失败", e);
+        }
     }
 
     @Override

@@ -9,6 +9,7 @@
       <view class="user-info">
         <text class="nickname">{{ userStore.userInfo?.nickname || '用户' }}</text>
         <text class="user-id">ID: {{ userStore.userInfo?.userId }}</text>
+        <text :class="'member-badge level-' + (userStore.userInfo?.memberLevel || 0)">{{ memberLevelName }}</text>
       </view>
     </view>
     <view class="user-header not-login" v-else @click="goLogin">
@@ -228,6 +229,9 @@ const avatarUrl = computed(() =>
   localAvatar.value || uni.fixImgUrl(userStore.userInfo?.avatar) || 'https://picsum.photos/seed/avatar/200/200'
 )
 
+const MEMBER_NAMES = { 0: '普通用户', 1: '银卡会员', 2: '金卡会员', 3: '钻石会员' }
+const memberLevelName = computed(() => MEMBER_NAMES[userStore.userInfo?.memberLevel ?? 0] || '普通用户')
+
 const addresses = ref([])
 const profileVisible = ref(false)
 const pwdVisible = ref(false)
@@ -437,6 +441,28 @@ function handleLogout() {
   color: rgba(255,255,255,0.8);
   display: block;
   margin-top: 4rpx;
+}
+
+.member-badge {
+  display: inline-block;
+  font-size: 22rpx;
+  padding: 4rpx 16rpx;
+  border-radius: 20rpx;
+  margin-top: 8rpx;
+  font-weight: 500;
+}
+.level-0 { background: rgba(255,255,255,0.25); color: #fff; }
+.level-1 { background: linear-gradient(135deg, #C0C0C0, #E8E8E8); color: #4a4a4a; }
+.level-2 { background: linear-gradient(135deg, #FFD700, #FFEC80); color: #6B4E00; }
+.level-3 {
+  background: linear-gradient(135deg, #2d1b69, #4a2c8a);
+  color: #E0B0FF;
+  box-shadow: 0 0 16rpx rgba(160,80,255,0.6), 0 0 40rpx rgba(160,80,255,0.3);
+  animation: diamond-glow 2s ease-in-out infinite;
+}
+@keyframes diamond-glow {
+  0%, 100% { box-shadow: 0 0 16rpx rgba(160,80,255,0.6), 0 0 40rpx rgba(160,80,255,0.3); }
+  50% { box-shadow: 0 0 28rpx rgba(180,120,255,0.9), 0 0 60rpx rgba(160,80,255,0.5), 0 0 100rpx rgba(120,40,220,0.3); }
 }
 
 .menu-section {

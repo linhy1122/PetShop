@@ -26,6 +26,12 @@
           <text class="info-price price-tag">{{ product.price }}</text>
           <text class="info-sales" v-if="product.sales">已售 {{ product.sales }}</text>
         </view>
+        <!-- 会员价 -->
+        <view class="member-price" v-if="userStore.isLoggedIn() && memberPrice !== null">
+          <text class="member-label">{{ memberLevelName }}</text>
+          <text class="member-price-value">¥{{ memberPrice }}</text>
+          <text class="member-discount">（{{ discountDesc }}）</text>
+        </view>
 
         <!-- 宠物专属信息 -->
         <view class="info-meta" v-if="product.productType === 1">
@@ -105,6 +111,21 @@ const reviews = ref([])
 const quantity = ref(1)
 const loading = ref(false)
 let productId = ''
+
+const MEMBER_DISCOUNTS = { 0: 1, 1: 0.95, 2: 0.9, 3: 0.85 }
+const MEMBER_NAMES = { 0: '普通用户', 1: '银卡会员', 2: '金卡会员', 3: '钻石会员' }
+const DISCOUNT_DESCS = { 0: '', 1: '95折', 2: '9折', 3: '85折' }
+
+const memberLevel = computed(() => userStore.userInfo?.memberLevel ?? 0)
+const memberPrice = computed(() => {
+  const p = product.value
+  if (!p || !p.price) return null
+  const level = memberLevel.value
+  if (level === 0) return null
+  return (parseFloat(p.price) * MEMBER_DISCOUNTS[level]).toFixed(2)
+})
+const memberLevelName = computed(() => MEMBER_NAMES[memberLevel.value] || '')
+const discountDesc = computed(() => DISCOUNT_DESCS[memberLevel.value] || '')
 
 const FALLBACK_IMG = 'https://picsum.photos/seed/pd/400/300'
 
@@ -253,6 +274,33 @@ function goStore() {
   font-size: 26rpx;
   color: #666;
   line-height: 2;
+}
+
+.member-price {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  padding: 14rpx 20rpx;
+  margin-top: 16rpx;
+  background: linear-gradient(135deg, #FFF7ED, #FFF1F2);
+  border-radius: 12rpx;
+  border: 1rpx solid #FFE4D0;
+}
+.member-label {
+  font-size: 22rpx;
+  color: #fff;
+  background: #FF6B35;
+  padding: 4rpx 12rpx;
+  border-radius: 6rpx;
+}
+.member-price-value {
+  font-size: 36rpx;
+  font-weight: 800;
+  color: #FF6B35;
+}
+.member-discount {
+  font-size: 24rpx;
+  color: #E8734A;
 }
 
 .store-row {
