@@ -1,7 +1,5 @@
 package com.petshop.service;
 
-import java.util.Map;
-
 /**
  * AI 大模型服务
  */

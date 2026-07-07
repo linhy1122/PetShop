@@ -52,7 +52,7 @@ public class VideoController {
 
     /** 点赞 */
     @PutMapping("/{id}/like")
-    public Result<?> like(@PathVariable Long id) {
+    public Result<Object> like(@PathVariable Long id) {
         Video video = videoService.getById(id);
         if (video != null) {
             video.setLikeCount(video.getLikeCount() + 1);
@@ -63,21 +63,21 @@ public class VideoController {
 
     /** 新增视频 */
     @PostMapping
-    public Result<?> create(@Valid @RequestBody VideoDto dto) {
+    public Result<Object> create(@Valid @RequestBody VideoDto dto) {
         videoService.saveVideo(dto);
         return Result.ok("上传成功");
     }
 
     /** 编辑视频 */
     @PutMapping("/{id}")
-    public Result<?> update(@PathVariable Long id, @Valid @RequestBody VideoDto dto) {
+    public Result<Object> update(@PathVariable Long id, @Valid @RequestBody VideoDto dto) {
         videoService.updateVideo(id, dto);
         return Result.ok("修改成功");
     }
 
     /** 删除视频 */
     @DeleteMapping("/{id}")
-    public Result<?> delete(@PathVariable Long id) {
+    public Result<Object> delete(@PathVariable Long id) {
         videoService.deleteVideo(id);
         return Result.ok("删除成功");
     }

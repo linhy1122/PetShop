@@ -2,6 +2,7 @@ package com.petshop.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.petshop.common.BusinessException;
 import com.petshop.dto.CartItemDto;
 import com.petshop.entity.Cart;
 import com.petshop.entity.Product;
@@ -30,7 +31,7 @@ public class CartServiceImpl extends ServiceImpl<CartMapper, Cart> implements Ca
         // 校验商品是否存在
         Product product = productMapper.selectById(productId);
         if (product == null || product.getStatus() == 0) {
-            throw new RuntimeException("商品已下架或不存在");
+            throw new BusinessException("商品已下架或不存在");
         }
 
         // 检查是否已存在
@@ -46,11 +47,11 @@ public class CartServiceImpl extends ServiceImpl<CartMapper, Cart> implements Ca
 
         // 库存校验：周边类型需要检查库存，宠物类型 stock=1
         if (product.getProductType() == 2 && totalQty > product.getStock()) {
-            throw new RuntimeException("库存不足，当前库存：" + product.getStock());
+            throw new BusinessException("库存不足，当前库存：" + product.getStock());
         }
         // 宠物类型只能买1只
         if (product.getProductType() == 1 && totalQty > 1) {
-            throw new RuntimeException("每只宠物限购1只");
+            throw new BusinessException("每只宠物限购1只");
         }
 
         if (exist != null) {
@@ -143,16 +144,16 @@ public class CartServiceImpl extends ServiceImpl<CartMapper, Cart> implements Ca
     public void updateQuantity(Long cartId, Integer quantity) {
         Cart cart = getById(cartId);
         if (cart == null) {
-            throw new RuntimeException("购物车记录不存在");
+            throw new BusinessException("购物车记录不存在");
         }
 
         // 校验库存
         Product product = productMapper.selectById(cart.getProductId());
         if (product != null && product.getProductType() == 2 && quantity > product.getStock()) {
-            throw new RuntimeException("库存不足，当前库存：" + product.getStock());
+            throw new BusinessException("库存不足，当前库存：" + product.getStock());
         }
         if (product != null && product.getProductType() == 1 && quantity > 1) {
-            throw new RuntimeException("每只宠物限购1只");
+            throw new BusinessException("每只宠物限购1只");
         }
 
         cart.setQuantity(quantity);

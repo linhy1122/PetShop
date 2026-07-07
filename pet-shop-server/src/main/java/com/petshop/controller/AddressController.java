@@ -30,28 +30,28 @@ public class AddressController {
 
     /** 新增地址 */
     @PostMapping
-    public Result<?> add(@RequestBody Address address) {
+    public Result<Object> add(@RequestBody Address address) {
         addressMapper.insert(address);
         return Result.ok();
     }
 
     /** 修改地址 */
     @PutMapping
-    public Result<?> update(@RequestBody Address address) {
+    public Result<Object> update(@RequestBody Address address) {
         addressMapper.updateById(address);
         return Result.ok();
     }
 
     /** 删除地址 */
     @DeleteMapping("/{id}")
-    public Result<?> delete(@PathVariable Long id) {
+    public Result<Object> delete(@PathVariable Long id) {
         addressMapper.deleteById(id);
         return Result.ok();
     }
 
     /** 设置默认地址 */
     @PutMapping("/{id}/default")
-    public Result<?> setDefault(@PathVariable Long id, @RequestParam Long userId) {
+    public Result<Object> setDefault(@PathVariable Long id, @RequestParam Long userId) {
         // 取消其他默认
         LambdaQueryWrapper<Address> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(Address::getUserId, userId)

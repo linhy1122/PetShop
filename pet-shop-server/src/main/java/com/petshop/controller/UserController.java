@@ -26,14 +26,14 @@ public class UserController {
     private UserService userService;
 
     @PostMapping("/register")
-    public Result<?> register(@Valid @RequestBody RegisterDto dto) {
+    public Result<Object> register(@Valid @RequestBody RegisterDto dto) {
         User user = userService.register(dto.getUsername(), dto.getPassword(), dto.getPhone(),
                 dto.getCaptchaKey(), dto.getCaptchaX());
         return Result.ok(Map.of("userId", user.getId()));
     }
 
     @PostMapping("/login")
-    public Result<?> login(@Valid @RequestBody LoginDto dto) {
+    public Result<Object> login(@Valid @RequestBody LoginDto dto) {
         String token = userService.login(dto.getUsername(), dto.getPassword(),
                 dto.getCaptchaKey(), dto.getCaptchaX());
         User user = userService.findByUsername(dto.getUsername());
@@ -48,7 +48,7 @@ public class UserController {
 
     /** 微信小程序登录 */
     @PostMapping("/wx-login")
-    public Result<?> wxLogin(@RequestBody WxLoginDto dto) {
+    public Result<Object> wxLogin(@RequestBody WxLoginDto dto) {
         Map<String, Object> result = userService.loginByWechat(dto.getCode());
         return Result.ok(result);
     }
@@ -63,13 +63,13 @@ public class UserController {
     }
 
     @PutMapping("/profile")
-    public Result<?> updateProfile(@RequestBody User user) {
+    public Result<Object> updateProfile(@RequestBody User user) {
         userService.updateProfile(user);
         return Result.ok();
     }
 
     @PutMapping("/password")
-    public Result<?> updatePassword(@RequestParam Long userId,
+    public Result<Object> updatePassword(@RequestParam Long userId,
                                      @RequestParam String oldPassword,
                                      @RequestParam String newPassword) {
         userService.updatePassword(userId, oldPassword, newPassword);
@@ -98,7 +98,7 @@ public class UserController {
 
     /** 管理端编辑用户基本信息 */
     @PutMapping("/admin/{id}")
-    public Result<?> adminUpdate(@PathVariable Long id,
+    public Result<Object> adminUpdate(@PathVariable Long id,
                                   @Valid @RequestBody UserAdminDto dto) {
         userService.updateAdminUser(id, dto);
         return Result.ok("修改用户信息成功", null);
@@ -106,7 +106,7 @@ public class UserController {
 
     /** 管理端启用或禁用普通用户 */
     @PutMapping("/admin/{id}/status")
-    public Result<?> adminUpdateStatus(@PathVariable Long id,
+    public Result<Object> adminUpdateStatus(@PathVariable Long id,
                                         @RequestParam Integer status) {
         userService.updateAdminUserStatus(id, status);
         return Result.ok("用户状态修改成功", null);
@@ -114,14 +114,14 @@ public class UserController {
 
     /** 管理端新建管理员账号 */
     @PostMapping("/admin/create")
-    public Result<?> adminCreate(@RequestBody User user) {
+    public Result<Object> adminCreate(@RequestBody User user) {
         userService.adminCreateUser(user);
         return Result.ok("创建成功", null);
     }
 
     /** 管理端删除无历史订单的普通用户 */
     @DeleteMapping("/admin/{id}")
-    public Result<?> adminDelete(@PathVariable Long id) {
+    public Result<Object> adminDelete(@PathVariable Long id) {
         userService.deleteAdminUser(id);
         return Result.ok("删除用户成功", null);
     }

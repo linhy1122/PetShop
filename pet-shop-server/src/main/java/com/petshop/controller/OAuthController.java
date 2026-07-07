@@ -27,6 +27,11 @@ import java.util.Map;
 @RequestMapping("/oauth/github")
 public class OAuthController {
 
+    private static final String HEADER_ACCEPT = "Accept";
+    private static final String HEADER_ACCEPT_JSON = "application/json";
+    private static final String HEADER_AUTHORIZATION = "Authorization";
+    private static final String AUTH_BEARER_PREFIX = "Bearer ";
+
     @Autowired
     private GitHubOAuthProperties gitHubOAuth;
 
@@ -57,7 +62,7 @@ public class OAuthController {
             tokenParams.put("redirect_uri", gitHubOAuth.getRedirectUri());
 
             String tokenResult = HttpUtil.createPost("https://github.com/login/oauth/access_token")
-                    .header("Accept", "application/json")
+                    .header(HEADER_ACCEPT, HEADER_ACCEPT_JSON)
                     .form(tokenParams)
                     .execute()
                     .body();
@@ -71,8 +76,8 @@ public class OAuthController {
 
             // Step 2: 获取GitHub用户信息
             String userResult = HttpUtil.createGet("https://api.github.com/user")
-                    .header("Authorization", "Bearer " + accessToken)
-                    .header("Accept", "application/json")
+                    .header(HEADER_AUTHORIZATION, AUTH_BEARER_PREFIX + accessToken)
+                    .header(HEADER_ACCEPT, HEADER_ACCEPT_JSON)
                     .execute()
                     .body();
 
@@ -87,24 +92,7 @@ public class OAuthController {
             }
 
             // Step 3: 获取GitHub邮箱
-            String email = "";
-            try {
-                String emailResult = HttpUtil.createGet("https://api.github.com/user/emails")
-                        .header("Authorization", "Bearer " + accessToken)
-                        .header("Accept", "application/json")
-                        .execute()
-                        .body();
-                JSONArray emails = JSONUtil.parseArray(emailResult);
-                for (int i = 0; i < emails.size(); i++) {
-                    JSONObject e = emails.getJSONObject(i);
-                    if (e.getBool("primary", false) && e.getBool("verified", false)) {
-                        email = e.getStr("email", "");
-                        break;
-                    }
-                }
-            } catch (Exception ignored) {
-                // 邮箱获取失败不影响登录流程
-            }
+            String email = fetchGitHubEmail(accessToken);
 
             // Step 4: 查找或创建用户，生成令牌
             Map<String, Object> loginResult = userService.loginByGithub(githubId, login, avatarUrl, email);
@@ -123,5 +111,28 @@ public class OAuthController {
             String errorMsg = URLEncoder.encode(e.getMessage(), StandardCharsets.UTF_8);
             response.sendRedirect("http://localhost:3000/login?error=" + errorMsg);
         }
+    }
+
+    /**
+     * 获取GitHub用户主邮箱，获取失败返回空字符串
+     */
+    private String fetchGitHubEmail(String accessToken) {
+        try {
+            String emailResult = HttpUtil.createGet("https://api.github.com/user/emails")
+                    .header(HEADER_AUTHORIZATION, AUTH_BEARER_PREFIX + accessToken)
+                    .header(HEADER_ACCEPT, HEADER_ACCEPT_JSON)
+                    .execute()
+                    .body();
+            JSONArray emails = JSONUtil.parseArray(emailResult);
+            for (int i = 0; i < emails.size(); i++) {
+                JSONObject e = emails.getJSONObject(i);
+                if (e.getBool("primary", false) && e.getBool("verified", false)) {
+                    return e.getStr("email", "");
+                }
+            }
+        } catch (Exception ignored) {
+            // 邮箱获取失败不影响登录流程
+        }
+        return "";
     }
 }

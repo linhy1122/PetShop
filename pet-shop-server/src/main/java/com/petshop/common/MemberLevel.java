@@ -8,6 +8,10 @@ import java.math.RoundingMode;
  */
 public class MemberLevel {
 
+    private MemberLevel() {
+        // 工具类，禁止实例化
+    }
+
     /** 普通用户 — 原价 */
     public static final int NORMAL = 0;
     /** 银卡会员 — 95折 */

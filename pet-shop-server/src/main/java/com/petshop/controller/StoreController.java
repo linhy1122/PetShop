@@ -46,7 +46,7 @@ public class StoreController {
 
     /** 查询附近店铺 */
     @GetMapping("/nearby")
-    public Result<?> nearby(@RequestParam BigDecimal lng,
+    public Result<Object> nearby(@RequestParam BigDecimal lng,
                             @RequestParam BigDecimal lat,
                             @RequestParam(defaultValue = "5000") Integer radius) {
         return Result.ok(storeService.searchNearby(lng, lat, radius));
@@ -76,21 +76,21 @@ public class StoreController {
 
     /** 管理端编辑店铺 */
     @PutMapping("/admin/{id}")
-    public Result<?> adminUpdate(@PathVariable Long id, @Valid @RequestBody StoreDto dto) {
+    public Result<Object> adminUpdate(@PathVariable Long id, @Valid @RequestBody StoreDto dto) {
         storeService.updateStore(id, dto);
         return Result.ok("修改店铺成功", null);
     }
 
     /** 管理端删除店铺 */
     @DeleteMapping("/admin/{id}")
-    public Result<?> adminDelete(@PathVariable Long id) {
+    public Result<Object> adminDelete(@PathVariable Long id) {
         storeService.deleteStore(id);
         return Result.ok("删除店铺成功", null);
     }
 
     /** 管理端切换店铺营业状态 */
     @PutMapping("/admin/{id}/status")
-    public Result<?> adminUpdateStatus(@PathVariable Long id,
+    public Result<Object> adminUpdateStatus(@PathVariable Long id,
                                         @RequestParam Integer status) {
         storeService.updateStoreStatus(id, status);
         return Result.ok("店铺状态修改成功", null);
