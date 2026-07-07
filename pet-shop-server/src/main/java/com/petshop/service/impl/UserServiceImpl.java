@@ -37,7 +37,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     private static final String MSG_USERNAME_EXISTS = "用户名已存在";
     private static final String MSG_BAD_CREDENTIALS = "用户名或密码错误";
     private static final String MSG_USER_NOT_FOUND = "用户不存在";
-    private static final String MSG_OLD_PASSWORD_WRONG = "原密码错误";
+    private static final String MSG_OLD_CREDENTIALS_WRONG = "原密码错误";
     private static final String MSG_CAPTCHA_REQUIRED = "请完成滑块验证";
     private static final String MSG_CAPTCHA_FAILED = "验证码验证失败，请重试";
 
@@ -110,7 +110,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             throw new BusinessException("用户不存在");
         }
         if (!BCrypt.checkpw(oldPassword, user.getPassword())) {
-            throw new BusinessException("原密码错误");
+            throw new BusinessException(MSG_OLD_CREDENTIALS_WRONG);
         }
         user.setPassword(BCrypt.hashpw(newPassword));
         updateById(user);
