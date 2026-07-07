@@ -35,7 +35,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     private static final String MSG_ACCOUNT_DISABLED = "账户已被禁用";
     private static final String MSG_USERNAME_EXISTS = "用户名已存在";
-    private static final String MSG_WRONG_PASSWORD = "用户名或密码错误";
+    private static final String MSG_BAD_CREDENTIALS = "用户名或密码错误";
     private static final String MSG_USER_NOT_FOUND = "用户不存在";
     private static final String MSG_OLD_PASSWORD_WRONG = "原密码错误";
     private static final String MSG_CAPTCHA_REQUIRED = "请完成滑块验证";
@@ -81,7 +81,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
         User user = findByUsername(username);
         if (user == null) {
-            throw new BusinessException(MSG_WRONG_PASSWORD);
+            throw new BusinessException(MSG_BAD_CREDENTIALS);
         }
         if (user.getStatus() == 1) {
             throw new BusinessException(MSG_ACCOUNT_DISABLED);
@@ -89,7 +89,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
         // 验证密码（使用hutool的bcrypt）
         if (!BCrypt.checkpw(password, user.getPassword())) {
-            throw new BusinessException(MSG_WRONG_PASSWORD);
+            throw new BusinessException(MSG_BAD_CREDENTIALS);
         }
 
         // TODO: 后续版本迭代中替换为JWT Token，当前使用UUID临时方案
@@ -424,10 +424,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     /** 校验滑块验证码：解析签名token → 比对X位置 */
     private void verifyCaptcha(String captchaKey, Integer captchaX) {
         if (captchaX == null) {
-            throw new BusinessException("请完成滑块验证");
+            throw new BusinessException(MSG_CAPTCHA_REQUIRED);
         }
         if (!CaptchaUtil.verify(captchaKey, captchaX)) {
-            throw new BusinessException("验证码验证失败，请重试");
+            throw new BusinessException(MSG_CAPTCHA_FAILED);
         }
     }
 }

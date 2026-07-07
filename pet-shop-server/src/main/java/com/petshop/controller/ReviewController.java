@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -115,7 +116,8 @@ public class ReviewController {
                 && (orderIdObj == null || "0".equals(orderIdObj.toString()));
 
         if (params.fromProductPage) {
-            params.productId = Long.valueOf(productIdObj.toString());
+            params.productId = Long.valueOf(Objects.requireNonNull(productIdObj,
+                    "productId is required").toString());
         } else {
             params.orderId = Long.valueOf(body.get(KEY_ORDER_ID).toString());
         }

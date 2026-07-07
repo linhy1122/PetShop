@@ -110,34 +110,51 @@ public class AiServiceImpl implements AiService {
     private String buildDatabaseContext(String userMessage) {
         String msg = userMessage != null ? userMessage.toLowerCase() : "";
         StringBuilder ctx = new StringBuilder();
-
         appendCategorySection(ctx);
-
-        boolean isPet = containsAny(msg, PET_KEYWORDS);
-        boolean isSupplies = containsAny(msg, SUPPLIES_KEYWORDS);
-        boolean isPrice = containsAny(msg, PRICE_KEYWORDS);
-        boolean isStore = containsAny(msg, STORE_KEYWORDS);
-        boolean isHot = containsAny(msg, HOT_KEYWORDS);
-        boolean isCare = containsAny(msg, CARE_KEYWORDS);
-
-        if (isPet || isHot) {
-            ctx.append(buildProductSection("在售宠物", 1, 8));
-        }
-        if (isSupplies || isHot) {
-            ctx.append(buildProductSection("宠物周边 / 用品", 2, 8));
-        }
-        if (isPrice || isHot) {
-            ctx.append(buildProductSection("全部在售商品", null, 20));
-        }
-        if (isStore || isHot) {
-            appendStoreSection(ctx);
-        }
-        if (isCare) {
-            ctx.append(CARE_HINT);
-        }
-
+        appendSectionsByIntent(ctx, msg);
         ensureFallbackIfEmpty(ctx);
         return ctx.toString();
+    }
+
+    /**
+     * 根据用户消息中的意图关键词，向上下文中追加对应的数据区块
+     */
+    private void appendSectionsByIntent(StringBuilder ctx, String msg) {
+        if (shouldShowPet(msg)) {
+            ctx.append(buildProductSection("在售宠物", 1, 8));
+        }
+        if (shouldShowSupplies(msg)) {
+            ctx.append(buildProductSection("宠物周边 / 用品", 2, 8));
+        }
+        if (shouldShowAll(msg)) {
+            ctx.append(buildProductSection("全部在售商品", null, 20));
+        }
+        if (shouldShowStore(msg)) {
+            appendStoreSection(ctx);
+        }
+        if (shouldShowCare(msg)) {
+            ctx.append(CARE_HINT);
+        }
+    }
+
+    private boolean shouldShowPet(String msg) {
+        return containsAny(msg, PET_KEYWORDS) || containsAny(msg, HOT_KEYWORDS);
+    }
+
+    private boolean shouldShowSupplies(String msg) {
+        return containsAny(msg, SUPPLIES_KEYWORDS) || containsAny(msg, HOT_KEYWORDS);
+    }
+
+    private boolean shouldShowAll(String msg) {
+        return containsAny(msg, PRICE_KEYWORDS) || containsAny(msg, HOT_KEYWORDS);
+    }
+
+    private boolean shouldShowStore(String msg) {
+        return containsAny(msg, STORE_KEYWORDS) || containsAny(msg, HOT_KEYWORDS);
+    }
+
+    private boolean shouldShowCare(String msg) {
+        return containsAny(msg, CARE_KEYWORDS);
     }
 
     /**

@@ -48,7 +48,7 @@ public class OrderScheduler {
             }
         }
 
-        if (!expiredOrders.isEmpty()) {
+        if (!expiredOrders.isEmpty() && log.isInfoEnabled()) {
             log.info("自动取消超时订单完成，数量：{}", expiredOrders.size());
         }
     }

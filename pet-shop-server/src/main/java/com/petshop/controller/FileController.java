@@ -9,7 +9,6 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.PostConstruct;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Paths;
 import java.util.UUID;
 
 /**
@@ -29,8 +28,12 @@ public class FileController {
     public void init() {
         uploadDir = new File(uploadPathConfig);
         if (!uploadDir.isAbsolute()) {
-            uploadDir = Paths.get(System.getProperty("user.dir"), uploadPathConfig)
-                    .normalize().toFile();
+            try {
+                uploadDir = new File(new File(System.getProperty("user.dir")), uploadPathConfig)
+                        .getCanonicalFile();
+            } catch (IOException e) {
+                uploadDir = new File(System.getProperty("user.dir"), uploadPathConfig);
+            }
         }
         if (!uploadDir.exists()) {
             boolean created = uploadDir.mkdirs();

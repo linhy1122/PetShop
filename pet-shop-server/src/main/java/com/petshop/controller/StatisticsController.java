@@ -29,6 +29,7 @@ import java.util.stream.Collectors;
 public class StatisticsController {
 
     private static final String COLUMN_TOTAL = "total";
+    private static final String COLUMN_STATUS = "status";
 
     @Autowired
     private ProductService productService;
@@ -72,7 +73,7 @@ public class StatisticsController {
         QueryWrapper<Order> monthGmvQw = new QueryWrapper<>();
         monthGmvQw.select("IFNULL(SUM(total_amount), 0) AS total")
              .apply("YEAR(create_time) = {0} AND MONTH(create_time) = {1}", year, month)
-             .ne("status", -1);
+             .ne(COLUMN_STATUS, -1);
         BigDecimal monthGmv = (BigDecimal) orderService.listMaps(monthGmvQw).get(0).get(COLUMN_TOTAL);
         data.put("monthGmv", monthGmv);
 
@@ -80,7 +81,7 @@ public class StatisticsController {
         QueryWrapper<Order> monthRevQw = new QueryWrapper<>();
         monthRevQw.select("IFNULL(SUM(pay_amount), 0) AS total")
                .apply("YEAR(pay_time) = {0} AND MONTH(pay_time) = {1}", year, month)
-               .in("status", 1, 2, 3, 4);
+               .in(COLUMN_STATUS, 1, 2, 3, 4);
         BigDecimal monthRevenue = (BigDecimal) orderService.listMaps(monthRevQw).get(0).get(COLUMN_TOTAL);
         data.put("monthRevenue", monthRevenue);
 
@@ -88,7 +89,7 @@ public class StatisticsController {
         QueryWrapper<Order> refundQw = new QueryWrapper<>();
         refundQw.select("IFNULL(SUM(refund_money), 0) AS total")
                 .apply("YEAR(refund_time) = {0} AND MONTH(refund_time) = {1}", year, month)
-                .in("status", -3, -4);
+                .in(COLUMN_STATUS, -3, -4);
         BigDecimal monthRefund = (BigDecimal) orderService.listMaps(refundQw).get(0).get(COLUMN_TOTAL);
         data.put("monthRefund", monthRefund);
 
@@ -98,9 +99,9 @@ public class StatisticsController {
 
         // ========== 订单状态分布（全量） ==========
         QueryWrapper<Order> statusQw = new QueryWrapper<>();
-        statusQw.select("status", "COUNT(*) AS count")
-                .groupBy("status")
-                .orderByAsc("status");
+        statusQw.select(COLUMN_STATUS, "COUNT(*) AS count")
+                .groupBy(COLUMN_STATUS)
+                .orderByAsc(COLUMN_STATUS);
         List<Map<String, Object>> statusDistribution = orderService.listMaps(statusQw);
         data.put("statusDistribution", statusDistribution);
 
@@ -158,7 +159,6 @@ public class StatisticsController {
         } else {
             lastDay = targetMonth.atEndOfMonth();
         }
-        LocalDate firstDay = targetMonth.atDay(1);
         int daysInMonth = lastDay.getDayOfMonth();
 
         // 生成日期列表
@@ -178,7 +178,7 @@ public class StatisticsController {
             QueryWrapper<Order> qw = new QueryWrapper<>();
             qw.select("IFNULL(SUM(total_amount), 0) AS total")
               .apply("DATE(create_time) = {0}", date.toString())
-              .ne("status", -1);
+              .ne(COLUMN_STATUS, -1);
             BigDecimal val = (BigDecimal) orderService.listMaps(qw).get(0).get(COLUMN_TOTAL);
             gmv.add(val != null ? val : BigDecimal.ZERO);
         }
@@ -191,7 +191,7 @@ public class StatisticsController {
             QueryWrapper<Order> qw = new QueryWrapper<>();
             qw.select("IFNULL(SUM(pay_amount), 0) AS total")
               .apply("DATE(pay_time) = {0}", date.toString())
-              .in("status", 1, 2, 3, 4);
+              .in(COLUMN_STATUS, 1, 2, 3, 4);
             BigDecimal val = (BigDecimal) orderService.listMaps(qw).get(0).get(COLUMN_TOTAL);
             revenue.add(val != null ? val : BigDecimal.ZERO);
         }
@@ -204,7 +204,7 @@ public class StatisticsController {
             QueryWrapper<Order> qw = new QueryWrapper<>();
             qw.select("IFNULL(SUM(refund_money), 0) AS total")
               .apply("DATE(refund_time) = {0}", date.toString())
-              .in("status", -3, -4);
+              .in(COLUMN_STATUS, -3, -4);
             BigDecimal val = (BigDecimal) orderService.listMaps(qw).get(0).get(COLUMN_TOTAL);
             refund.add(val != null ? val : BigDecimal.ZERO);
         }

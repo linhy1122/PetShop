@@ -55,10 +55,9 @@ public class RecommendServiceImpl implements RecommendService {
             }
             Set<Long> otherSet = entry.getValue();
             double similarity = jaccard(purchased, otherSet);
-            if (similarity <= 0) {
-                continue;
+            if (similarity > 0) {
+                addScoresForUnpurchased(scores, otherSet, purchased, similarity);
             }
-            addScoresForUnpurchased(scores, otherSet, purchased, similarity);
         }
         return scores;
     }
