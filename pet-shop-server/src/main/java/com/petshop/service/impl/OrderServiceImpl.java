@@ -4,6 +4,7 @@ import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.IdUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.petshop.common.BusinessException;
 import com.petshop.entity.*;
 import com.petshop.mapper.OrderLogMapper;
 import com.petshop.mapper.OrderMapper;
@@ -56,7 +57,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
                 .toList();
 
         if (checkedItems.isEmpty()) {
-            throw new RuntimeException("购物车中没有选中的商品");
+            throw new BusinessException("购物车中没有选中的商品");
         }
 
         // 获取用户会员等级
@@ -68,11 +69,11 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         for (Cart cart : checkedItems) {
             Product product = productService.getById(cart.getProductId());
             if (product == null || product.getStatus() == 0) {
-                throw new RuntimeException("商品已下架：" + cart.getProductId());
+                throw new BusinessException("商品已下架：" + cart.getProductId());
             }
             // 宠物类商品唯一性校验
             if (product.getProductType() == 1 && product.getStock() == 0) {
-                throw new RuntimeException("该宠物已被其他用户购买：" + product.getName());
+                throw new BusinessException("该宠物已被其他用户购买：" + product.getName());
             }
             totalAmount = totalAmount.add(product.getPrice().multiply(BigDecimal.valueOf(cart.getQuantity())));
         }
@@ -232,7 +233,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
     public void auditRefund(Long orderId, boolean approved, String auditRemark) {
         Order order = getById(orderId);
         if (order.getStatus() != -2) {
-            throw new RuntimeException("当前状态不可审核退单");
+            throw new BusinessException("当前状态不可审核退单");
         }
         int fromStatus = order.getStatus();
 
@@ -279,7 +280,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
     public void adminRefund(Long orderId, String reason) {
         Order order = getById(orderId);
         if (order.getStatus() != 3) { // 只有已收货的才能管理员退单
-            throw new RuntimeException("当前状态不可退单");
+            throw new BusinessException("当前状态不可退单");
         }
         int fromStatus = order.getStatus();
         order.setStatus(-4);
@@ -332,12 +333,12 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
     /** 校验订单状态 */
     private void validateStatus(Order order, Integer... validStatuses) {
         if (order == null) {
-            throw new RuntimeException("订单不存在");
+            throw new BusinessException("订单不存在");
         }
         for (Integer s : validStatuses) {
             if (order.getStatus().equals(s)) return;
         }
-        throw new RuntimeException("当前订单状态不允许此操作，状态：" + order.getStatus());
+        throw new BusinessException("当前订单状态不允许此操作，状态：" + order.getStatus());
     }
 
     /** 保存订单操作日志 */

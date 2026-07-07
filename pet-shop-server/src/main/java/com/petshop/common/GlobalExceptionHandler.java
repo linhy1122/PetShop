@@ -14,15 +14,25 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(BusinessException.class)
+    public Result<Object> handleBusinessException(BusinessException e) {
+        if (log.isErrorEnabled()) {
+            log.error("业务异常: {}", e.getMessage());
+        }
+        return Result.fail(e.getMessage());
+    }
+
     @ExceptionHandler(RuntimeException.class)
-    public Result<?> handleRuntimeException(RuntimeException e) {
-        log.error("业务异常: {}", e.getMessage());
+    public Result<Object> handleRuntimeException(RuntimeException e) {
+        if (log.isErrorEnabled()) {
+            log.error("运行时异常: {}", e.getMessage());
+        }
         return Result.fail(e.getMessage());
     }
 
     @ExceptionHandler(BindException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public Result<?> handleBindException(BindException e) {
+    public Result<Object> handleBindException(BindException e) {
         String msg = e.getBindingResult().getFieldErrors().stream()
                 .map(f -> f.getField() + ": " + f.getDefaultMessage())
                 .reduce((a, b) -> a + "; " + b)
@@ -31,8 +41,10 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(Exception.class)
-    public Result<?> handleException(Exception e) {
-        log.error("系统异常", e);
+    public Result<Object> handleException(Exception e) {
+        if (log.isErrorEnabled()) {
+            log.error("系统异常", e);
+        }
         return Result.fail(500, "服务器内部错误");
     }
 }

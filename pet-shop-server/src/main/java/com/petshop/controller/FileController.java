@@ -9,6 +9,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.PostConstruct;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.UUID;
 
 /**
@@ -28,15 +29,18 @@ public class FileController {
     public void init() {
         uploadDir = new File(uploadPathConfig);
         if (!uploadDir.isAbsolute()) {
-            uploadDir = new File(System.getProperty("user.dir"), uploadPathConfig);
+            uploadDir = Paths.get(System.getProperty("user.dir"), uploadPathConfig)
+                    .normalize().toFile();
         }
         if (!uploadDir.exists()) {
             boolean created = uploadDir.mkdirs();
-            if (created) {
+            if (created && log.isInfoEnabled()) {
                 log.info("已创建上传目录: {}", uploadDir.getAbsolutePath());
             }
         }
-        log.info("文件上传目录: {}", uploadDir.getAbsolutePath());
+        if (log.isInfoEnabled()) {
+            log.info("文件上传目录: {}", uploadDir.getAbsolutePath());
+        }
     }
 
     /** 上传图片 */
@@ -55,10 +59,14 @@ public class FileController {
         try {
             File dest = new File(uploadDir, fileName);
             file.transferTo(dest);
-            log.info("文件上传成功: {}", dest.getAbsolutePath());
+            if (log.isInfoEnabled()) {
+                log.info("文件上传成功: {}", dest.getAbsolutePath());
+            }
             return Result.ok("/uploads/" + fileName);
         } catch (IOException e) {
-            log.error("文件上传失败", e);
+            if (log.isErrorEnabled()) {
+                log.error("文件上传失败", e);
+            }
             return Result.error("文件上传失败: " + e.getMessage());
         }
     }

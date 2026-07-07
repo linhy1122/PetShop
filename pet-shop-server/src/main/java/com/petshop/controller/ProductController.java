@@ -74,7 +74,7 @@ public class ProductController {
 
     /** 热门商品 */
     @GetMapping("/hot")
-    public Result<?> hot(@RequestParam(defaultValue = "8") Integer limit) {
+    public Result<Object> hot(@RequestParam(defaultValue = "8") Integer limit) {
         LambdaQueryWrapper<Product> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(Product::getStatus, 1)
                .orderByDesc(Product::getSales)
@@ -84,35 +84,35 @@ public class ProductController {
 
     /** 个性化推荐（协同过滤） */
     @GetMapping("/recommend")
-    public Result<?> recommend(@RequestParam Long userId,
+    public Result<Object> recommend(@RequestParam Long userId,
                                @RequestParam(defaultValue = "8") Integer limit) {
         return Result.ok(recommendService.recommend(userId, limit));
     }
 
     /** 新增商品 */
     @PostMapping
-    public Result<?> create(@Valid @RequestBody ProductDto dto) {
+    public Result<Object> create(@Valid @RequestBody ProductDto dto) {
         productService.saveProduct(dto);
         return Result.ok("新增成功");
     }
 
     /** 编辑商品 */
     @PutMapping("/{id}")
-    public Result<?> update(@PathVariable Long id, @Valid @RequestBody ProductDto dto) {
+    public Result<Object> update(@PathVariable Long id, @Valid @RequestBody ProductDto dto) {
         productService.updateProduct(id, dto);
         return Result.ok("修改成功");
     }
 
     /** 删除商品 */
     @DeleteMapping("/{id}")
-    public Result<?> delete(@PathVariable Long id) {
+    public Result<Object> delete(@PathVariable Long id) {
         productService.deleteProduct(id);
         return Result.ok("删除成功");
     }
 
     /** 上下架 */
     @PutMapping("/status")
-    public Result<?> status(@RequestParam Long productId, @RequestParam Integer status) {
+    public Result<Object> status(@RequestParam Long productId, @RequestParam Integer status) {
         productService.updateStatus(productId, status);
         return Result.ok("状态更新成功");
     }

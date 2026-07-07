@@ -1,6 +1,7 @@
 package com.petshop.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.petshop.common.BusinessException;
 import com.petshop.dto.ProductDto;
 import com.petshop.entity.Product;
 import com.petshop.mapper.ProductMapper;
@@ -20,16 +21,16 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
     public boolean deductStock(Long productId, Integer quantity) {
         Product product = getById(productId);
         if (product == null) {
-            throw new RuntimeException("商品不存在");
+            throw new BusinessException("商品不存在");
         }
         // 宠物周边（类型2）才检查库存，宠物（类型1）库存固定为1
         if (product.getProductType() == 2 && product.getStock() < quantity) {
-            throw new RuntimeException("库存不足");
+            throw new BusinessException("库存不足");
         }
         // 宠物类型：购买后直接下架，需检查是否已被他人购买
         if (product.getProductType() == 1) {
             if (product.getStatus() == 0 || product.getStock() == 0) {
-                throw new RuntimeException("该宠物已被其他用户购买");
+                throw new BusinessException("该宠物已被其他用户购买");
             }
             product.setStatus(0);
             product.setStock(0);

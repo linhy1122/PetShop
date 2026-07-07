@@ -4,6 +4,7 @@ import cn.hutool.crypto.digest.HMac;
 import cn.hutool.crypto.digest.HmacAlgorithm;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import com.petshop.common.BusinessException;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -18,6 +19,10 @@ import java.util.Map;
  * 滑块验证码工具类
  */
 public class CaptchaUtil {
+
+    private CaptchaUtil() {
+        // 工具类，禁止实例化
+    }
 
     private static final SecureRandom RANDOM = new SecureRandom();
     private static final String SECRET_KEY = "PetShopCaptcha@2024";
@@ -132,7 +137,7 @@ public class CaptchaUtil {
             ImageIO.write(image, "png", bos);
             return "data:image/png;base64," + Base64.getEncoder().encodeToString(bos.toByteArray());
         } catch (IOException e) {
-            throw new RuntimeException("图片编码失败", e);
+            throw new BusinessException("图片编码失败", e);
         }
     }
 

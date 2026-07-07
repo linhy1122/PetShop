@@ -19,7 +19,7 @@ public class AiController {
 
     /** 发送消息 */
     @PostMapping("/chat")
-    public Result<?> chat(@RequestBody Map<String, String> body) {
+    public Result<Object> chat(@RequestBody Map<String, String> body) {
         String message = body.get("message");
         String sessionId = body.getOrDefault("sessionId", "default");
         String reply = aiService.chat(message, sessionId);

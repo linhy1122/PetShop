@@ -41,7 +41,7 @@ public class OrderController {
 
     /** 支付订单 */
     @PutMapping("/{orderId}/pay")
-    public Result<?> pay(@PathVariable Long orderId,
+    public Result<Object> pay(@PathVariable Long orderId,
                          @RequestParam(defaultValue = "alipay") String payMethod) {
         orderService.payOrder(orderId, payMethod);
         return Result.ok();
@@ -49,7 +49,7 @@ public class OrderController {
 
     /** 取消订单 */
     @PutMapping("/{orderId}/cancel")
-    public Result<?> cancel(@PathVariable Long orderId,
+    public Result<Object> cancel(@PathVariable Long orderId,
                             @RequestParam String reason,
                             @RequestParam(defaultValue = "USER") String cancelType) {
         orderService.cancelOrder(orderId, reason, cancelType, false);
@@ -58,14 +58,14 @@ public class OrderController {
 
     /** 确认收货 */
     @PutMapping("/{orderId}/receive")
-    public Result<?> receive(@PathVariable Long orderId) {
+    public Result<Object> receive(@PathVariable Long orderId) {
         orderService.confirmReceive(orderId);
         return Result.ok();
     }
 
     /** 申请退单 */
     @PutMapping("/{orderId}/refund")
-    public Result<?> refund(@PathVariable Long orderId,
+    public Result<Object> refund(@PathVariable Long orderId,
                             @RequestParam String reason) {
         orderService.applyRefund(orderId, reason);
         return Result.ok();
@@ -107,7 +107,7 @@ public class OrderController {
 
     /** 发货（管理员） */
     @PutMapping("/{orderId}/deliver")
-    public Result<?> deliver(@PathVariable Long orderId,
+    public Result<Object> deliver(@PathVariable Long orderId,
                              @RequestParam String logisticsCompany,
                              @RequestParam String logisticsNo) {
         orderService.deliverOrder(orderId, logisticsCompany, logisticsNo);
@@ -116,7 +116,7 @@ public class OrderController {
 
     /** 审核退单（管理员） */
     @PutMapping("/{orderId}/audit-refund")
-    public Result<?> auditRefund(@PathVariable Long orderId,
+    public Result<Object> auditRefund(@PathVariable Long orderId,
                                   @RequestParam boolean approved,
                                   @RequestParam(defaultValue = "") String auditRemark) {
         orderService.auditRefund(orderId, approved, auditRemark);
@@ -125,7 +125,7 @@ public class OrderController {
 
     /** 管理员直接退单 */
     @PutMapping("/{orderId}/admin-refund")
-    public Result<?> adminRefund(@PathVariable Long orderId,
+    public Result<Object> adminRefund(@PathVariable Long orderId,
                                   @RequestParam String reason) {
         orderService.adminRefund(orderId, reason);
         return Result.ok();

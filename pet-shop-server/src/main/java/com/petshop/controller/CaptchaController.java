@@ -21,7 +21,7 @@ public class CaptchaController {
 
     /** 即时校验滑块位置（前端松开滑块时调用） */
     @PostMapping("/verify")
-    public Result<?> verify(@RequestBody Map<String, Object> body) {
+    public Result<Object> verify(@RequestBody Map<String, Object> body) {
         String captchaKey = (String) body.get("captchaKey");
         Integer captchaX = (Integer) body.get("captchaX");
         if (captchaKey == null || captchaX == null) {

@@ -8,6 +8,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import javax.annotation.PostConstruct;
 import java.io.File;
+import java.nio.file.Paths;
 
 /**
  * Web MVC 配置
@@ -25,7 +26,8 @@ public class WebConfig implements WebMvcConfigurer {
     public void init() {
         File dir = new File(uploadPathConfig);
         if (!dir.isAbsolute()) {
-            dir = new File(System.getProperty("user.dir"), uploadPathConfig);
+            dir = Paths.get(System.getProperty("user.dir"), uploadPathConfig)
+                    .normalize().toFile();
         }
         // 确保以 / 结尾，Spring 资源映射要求
         String absPath = dir.getAbsolutePath().replace('\\', '/');

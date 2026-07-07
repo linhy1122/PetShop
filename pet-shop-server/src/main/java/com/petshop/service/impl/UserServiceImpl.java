@@ -8,6 +8,7 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.petshop.common.BusinessException;
 import com.petshop.config.WechatProperties;
 import com.petshop.dto.UserAdminDto;
 import com.petshop.entity.Order;
@@ -32,6 +33,14 @@ import java.util.stream.Collectors;
 @Service
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
 
+    private static final String MSG_ACCOUNT_DISABLED = "账户已被禁用";
+    private static final String MSG_USERNAME_EXISTS = "用户名已存在";
+    private static final String MSG_WRONG_PASSWORD = "用户名或密码错误";
+    private static final String MSG_USER_NOT_FOUND = "用户不存在";
+    private static final String MSG_OLD_PASSWORD_WRONG = "原密码错误";
+    private static final String MSG_CAPTCHA_REQUIRED = "请完成滑块验证";
+    private static final String MSG_CAPTCHA_FAILED = "验证码验证失败，请重试";
+
     private final OrderMapper orderMapper;
     private final WechatProperties wechatProperties;
 
@@ -49,7 +58,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         // 检查用户名是否已存在
         User exist = findByUsername(username);
         if (exist != null) {
-            throw new RuntimeException("用户名已存在");
+            throw new BusinessException(MSG_USERNAME_EXISTS);
         }
 
         User user = new User();
@@ -72,18 +81,18 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
         User user = findByUsername(username);
         if (user == null) {
-            throw new RuntimeException("用户名或密码错误");
+            throw new BusinessException(MSG_WRONG_PASSWORD);
         }
         if (user.getStatus() == 1) {
-            throw new RuntimeException("账户已被禁用");
+            throw new BusinessException(MSG_ACCOUNT_DISABLED);
         }
 
         // 验证密码（使用hutool的bcrypt）
         if (!BCrypt.checkpw(password, user.getPassword())) {
-            throw new RuntimeException("用户名或密码错误");
+            throw new BusinessException(MSG_WRONG_PASSWORD);
         }
 
-        // TODO: 生成JWT Token
+        // TODO: 后续版本迭代中替换为JWT Token，当前使用UUID临时方案
         return "token-" + UUID.randomUUID();
     }
 
@@ -98,10 +107,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     public void updatePassword(Long userId, String oldPassword, String newPassword) {
         User user = getById(userId);
         if (user == null) {
-            throw new RuntimeException("用户不存在");
+            throw new BusinessException("用户不存在");
         }
         if (!BCrypt.checkpw(oldPassword, user.getPassword())) {
-            throw new RuntimeException("原密码错误");
+            throw new BusinessException("原密码错误");
         }
         user.setPassword(BCrypt.hashpw(newPassword));
         updateById(user);
@@ -111,7 +120,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     public void updateProfile(User user) {
         User dbUser = getById(user.getId());
         if (dbUser == null) {
-            throw new RuntimeException("用户不存在");
+            throw new BusinessException("用户不存在");
         }
         // 只更新允许修改的字段
         if (StrUtil.isNotBlank(user.getNickname())) {
@@ -170,7 +179,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         }
 
         if (user.getStatus() == 1) {
-            throw new RuntimeException("账户已被禁用");
+            throw new BusinessException(MSG_ACCOUNT_DISABLED);
         }
 
         String token = "token-" + UUID.randomUUID();
@@ -197,7 +206,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
         String openid = result.getStr("openid");
         if (openid == null) {
-            throw new RuntimeException("微信登录失败: " + result.getStr("errmsg", "未知错误"));
+            throw new BusinessException("微信登录失败: " + result.getStr("errmsg", "未知错误"));
         }
 
         // 2. 根据 openid 查找用户
@@ -217,7 +226,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         }
 
         if (user.getStatus() == 1) {
-            throw new RuntimeException("账户已被禁用");
+            throw new BusinessException(MSG_ACCOUNT_DISABLED);
         }
 
         String token = "token-" + UUID.randomUUID();
@@ -289,7 +298,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         validateMemberLevel(dto.getMemberLevel());
         User user = getExistingUser(id);
         if ("admin".equals(user.getRole()) && dto.getStatus() == 1) {
-            throw new RuntimeException("管理员账号不能被禁用");
+            throw new BusinessException("管理员账号不能被禁用");
         }
         user.setNickname(trimToEmpty(dto.getNickname()));
         user.setPhone(trimToEmpty(dto.getPhone()));
@@ -299,7 +308,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         user.setStatus(dto.getStatus());
         user.setUpdateTime(LocalDateTime.now());
         if (!updateById(user)) {
-            throw new RuntimeException("修改用户信息失败");
+            throw new BusinessException("修改用户信息失败");
         }
     }
 
@@ -309,12 +318,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         validateStatus(status);
         User user = getExistingUser(id);
         if ("admin".equals(user.getRole()) && status == 1) {
-            throw new RuntimeException("管理员账号不能被禁用");
+            throw new BusinessException("管理员账号不能被禁用");
         }
         user.setStatus(status);
         user.setUpdateTime(LocalDateTime.now());
         if (!updateById(user)) {
-            throw new RuntimeException("用户状态修改失败");
+            throw new BusinessException("用户状态修改失败");
         }
     }
 
@@ -322,11 +331,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Transactional
     public void adminCreateUser(User user) {
         if (StrUtil.isBlank(user.getUsername()) || StrUtil.isBlank(user.getPassword())) {
-            throw new RuntimeException("用户名和密码不能为空");
+            throw new BusinessException("用户名和密码不能为空");
         }
         User exist = findByUsername(user.getUsername());
         if (exist != null) {
-            throw new RuntimeException("用户名已存在");
+            throw new BusinessException(MSG_USERNAME_EXISTS);
         }
 
         user.setRole("admin");
@@ -351,27 +360,27 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     public void deleteAdminUser(Long id) {
         User user = getExistingUser(id);
         if ("admin".equals(user.getRole())) {
-            throw new RuntimeException("管理员账号不能删除");
+            throw new BusinessException("管理员账号不能删除");
         }
         LambdaQueryWrapper<Order> orderWrapper = new LambdaQueryWrapper<>();
         orderWrapper.eq(Order::getUserId, id)
                 .eq(Order::getDeleted, 0);
         if (orderMapper.selectCount(orderWrapper) > 0) {
-            throw new RuntimeException("该用户存在订单，不能删除");
+            throw new BusinessException("该用户存在订单，不能删除");
         }
         // 项目当前未启用 @TableLogic，沿用现有 removeById 删除方式。
         if (!removeById(id)) {
-            throw new RuntimeException("删除用户失败");
+            throw new BusinessException("删除用户失败");
         }
     }
 
     private User getExistingUser(Long id) {
         if (id == null) {
-            throw new RuntimeException("用户ID不能为空");
+            throw new BusinessException("用户ID不能为空");
         }
         User user = getById(id);
         if (user == null || Integer.valueOf(1).equals(user.getDeleted())) {
-            throw new RuntimeException("用户不存在");
+            throw new BusinessException("用户不存在");
         }
         return user;
     }
@@ -384,7 +393,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     private void validateStatus(Integer status) {
         if (status == null || (status != 0 && status != 1)) {
-            throw new RuntimeException("用户状态只能是0或1");
+            throw new BusinessException("用户状态只能是0或1");
         }
     }
 
@@ -396,7 +405,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     private void validateMemberLevel(Integer memberLevel) {
         if (memberLevel == null || memberLevel < 0 || memberLevel > 3) {
-            throw new RuntimeException("会员等级只能是0到3");
+            throw new BusinessException("会员等级只能是0到3");
         }
     }
 
@@ -404,7 +413,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         if (StrUtil.isNotBlank(role)
                 && !"user".equals(role.trim())
                 && !"admin".equals(role.trim())) {
-            throw new RuntimeException("用户角色只能是user或admin");
+            throw new BusinessException("用户角色只能是user或admin");
         }
     }
 
@@ -415,10 +424,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     /** 校验滑块验证码：解析签名token → 比对X位置 */
     private void verifyCaptcha(String captchaKey, Integer captchaX) {
         if (captchaX == null) {
-            throw new RuntimeException("请完成滑块验证");
+            throw new BusinessException("请完成滑块验证");
         }
         if (!CaptchaUtil.verify(captchaKey, captchaX)) {
-            throw new RuntimeException("验证码验证失败，请重试");
+            throw new BusinessException("验证码验证失败，请重试");
         }
     }
 }

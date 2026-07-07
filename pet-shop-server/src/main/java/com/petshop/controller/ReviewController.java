@@ -26,6 +26,16 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/review")
 public class ReviewController {
 
+    private static final String KEY_USER_ID = "userId";
+    private static final String KEY_RATING = "rating";
+    private static final String KEY_CONTENT = "content";
+    private static final String KEY_IMAGES = "images";
+    private static final String KEY_PRODUCT_ID = "productId";
+    private static final String KEY_ORDER_ID = "orderId";
+    private static final String DEFAULT_IMAGES = "[]";
+    private static final String DEFAULT_CONTENT = "";
+    private static final int DEFAULT_RATING = 5;
+
     @Autowired
     private ReviewService reviewService;
 
@@ -48,7 +58,6 @@ public class ReviewController {
                .orderByDesc(Review::getCreateTime);
         Page<Review> result = reviewService.page(new Page<>(page, size), wrapper);
 
-        // 批量填充用户名和头像
         List<Review> records = result.getRecords();
         if (!records.isEmpty()) {
             Set<Long> userIds = records.stream()
@@ -57,73 +66,107 @@ public class ReviewController {
             List<User> users = userService.listByIds(userIds);
             Map<Long, User> userMap = users.stream()
                     .collect(Collectors.toMap(User::getId, u -> u));
-            records.forEach(r -> {
-                User u = userMap.get(r.getUserId());
-                if (u != null) {
-                    r.setUsername(u.getNickname() != null && !u.getNickname().isEmpty()
-                            ? u.getNickname() : u.getUsername());
-                    r.setAvatar(u.getAvatar() != null ? u.getAvatar() : "");
-                } else {
-                    r.setUsername("匿名用户");
-                    r.setAvatar("");
-                }
-            });
+            records.forEach(r -> fillUserInfo(r, userMap.get(r.getUserId())));
         }
 
         return Result.ok(result);
     }
 
+    private void fillUserInfo(Review review, User user) {
+        if (user != null) {
+            review.setUsername(user.getNickname() != null && !user.getNickname().isEmpty()
+                    ? user.getNickname() : user.getUsername());
+            review.setAvatar(user.getAvatar() != null ? user.getAvatar() : "");
+        } else {
+            review.setUsername("匿名用户");
+            review.setAvatar("");
+        }
+    }
+
     /** 提交评价（支持从订单详情或商品详情页提交） */
     @PostMapping("/submit")
     @Transactional
-    public Result<?> submit(@RequestBody Map<String, Object> body) {
-        Long userId = Long.valueOf(body.get("userId").toString());
-        Integer rating = body.get("rating") != null ? Integer.valueOf(body.get("rating").toString()) : 5;
-        String content = body.get("content") != null ? body.get("content").toString() : "";
-        String images = body.get("images") != null ? body.get("images").toString() : "[]";
+    public Result<Object> submit(@RequestBody Map<String, Object> body) {
+        SubmitParams params = parseSubmitParams(body);
 
-        // 判断评价来源：有 productId 且无有效 orderId → 商品详情页直接评价
-        Object productIdObj = body.get("productId");
-        Object orderIdObj = body.get("orderId");
-        boolean fromProductPage = productIdObj != null && !"0".equals(productIdObj.toString())
-                && (orderIdObj == null || "0".equals(orderIdObj.toString()));
-
-        if (fromProductPage) {
-            // 商品详情页直接评价
-            Long productId = Long.valueOf(productIdObj.toString());
-            Review review = new Review();
-            review.setUserId(userId);
-            review.setOrderId(0L);
-            review.setProductId(productId);
-            review.setRating(rating);
-            review.setContent(content);
-            review.setImages(images);
-            reviewService.save(review);
+        if (params.fromProductPage) {
+            createProductPageReview(params);
         } else {
-            // 订单详情页评价：对订单中每个商品生成评价，并完成订单
-            Long orderId = Long.valueOf(body.get("orderId").toString());
-            List<OrderItem> items = orderItemService.getByOrderId(orderId);
-            if (items.isEmpty()) {
-                return Result.error("订单无商品，无法评价");
-            }
-            for (OrderItem item : items) {
-                Review review = new Review();
-                review.setUserId(userId);
-                review.setOrderId(orderId);
-                review.setProductId(item.getProductId());
-                review.setRating(rating);
-                review.setContent(content);
-                review.setImages(images);
-                reviewService.save(review);
-            }
-            // 仅当订单状态为3（待评价）时才完成订单
-            com.petshop.entity.Order order = orderService.getById(orderId);
-            if (order != null && order.getStatus() == 3) {
-                orderService.completeOrder(orderId);
-            }
+            createOrderReviews(params);
         }
 
         return Result.ok();
+    }
+
+    /** 解析提交参数 */
+    private SubmitParams parseSubmitParams(Map<String, Object> body) {
+        SubmitParams params = new SubmitParams();
+        params.userId = Long.valueOf(body.get(KEY_USER_ID).toString());
+        params.rating = body.get(KEY_RATING) != null
+                ? Integer.valueOf(body.get(KEY_RATING).toString()) : DEFAULT_RATING;
+        params.content = body.get(KEY_CONTENT) != null
+                ? body.get(KEY_CONTENT).toString() : DEFAULT_CONTENT;
+        params.images = body.get(KEY_IMAGES) != null
+                ? body.get(KEY_IMAGES).toString() : DEFAULT_IMAGES;
+
+        Object productIdObj = body.get(KEY_PRODUCT_ID);
+        Object orderIdObj = body.get(KEY_ORDER_ID);
+        params.fromProductPage = productIdObj != null && !"0".equals(productIdObj.toString())
+                && (orderIdObj == null || "0".equals(orderIdObj.toString()));
+
+        if (params.fromProductPage) {
+            params.productId = Long.valueOf(productIdObj.toString());
+        } else {
+            params.orderId = Long.valueOf(body.get(KEY_ORDER_ID).toString());
+        }
+        return params;
+    }
+
+    /** 从商品详情页直接评价 */
+    private void createProductPageReview(SubmitParams params) {
+        Review review = buildReview(params.userId, 0L, params.productId,
+                params.rating, params.content, params.images);
+        reviewService.save(review);
+    }
+
+    /** 从订单详情页评价：对订单中每个商品生成评价 */
+    private void createOrderReviews(SubmitParams params) {
+        List<OrderItem> items = orderItemService.getByOrderId(params.orderId);
+        if (items.isEmpty()) {
+            throw new com.petshop.common.BusinessException("订单无商品，无法评价");
+        }
+        for (OrderItem item : items) {
+            Review review = buildReview(params.userId, params.orderId, item.getProductId(),
+                    params.rating, params.content, params.images);
+            reviewService.save(review);
+        }
+        com.petshop.entity.Order order = orderService.getById(params.orderId);
+        if (order != null && order.getStatus() == 3) {
+            orderService.completeOrder(params.orderId);
+        }
+    }
+
+    private Review buildReview(Long userId, Long orderId, Long productId,
+                               Integer rating, String content, String images) {
+        Review review = new Review();
+        review.setUserId(userId);
+        review.setOrderId(orderId);
+        review.setProductId(productId);
+        review.setRating(rating);
+        review.setContent(content);
+        review.setImages(images);
+        return review;
+    }
+
+    /** 提交参数内部类 */
+    private static class SubmitParams {
+        Long userId;
+        Integer rating;
+        String content;
+        String images;
+        boolean fromProductPage;
+        Long productId;
+        Long orderId;
     }
 
     /** 获取用户在指定订单下的评价（含商品名称） */
@@ -136,7 +179,6 @@ public class ReviewController {
                .orderByDesc(Review::getCreateTime);
         List<Review> reviews = reviewService.list(wrapper);
 
-        // 填充商品名称
         if (!reviews.isEmpty()) {
             List<OrderItem> items = orderItemService.getByOrderId(orderId);
             Map<Long, String> nameMap = items.stream()
@@ -151,12 +193,15 @@ public class ReviewController {
     /** 修改评价（批量更新该订单下该用户的所有评价记录） */
     @PutMapping("/order/{orderId}")
     @Transactional
-    public Result<?> updateByOrder(@PathVariable Long orderId,
-                                    @RequestBody Map<String, Object> body) {
-        Long userId = Long.valueOf(body.get("userId").toString());
-        Integer rating = body.get("rating") != null ? Integer.valueOf(body.get("rating").toString()) : 5;
-        String content = body.get("content") != null ? body.get("content").toString() : "";
-        String images = body.get("images") != null ? body.get("images").toString() : "[]";
+    public Result<Object> updateByOrder(@PathVariable Long orderId,
+                                        @RequestBody Map<String, Object> body) {
+        Long userId = Long.valueOf(body.get(KEY_USER_ID).toString());
+        Integer rating = body.get(KEY_RATING) != null
+                ? Integer.valueOf(body.get(KEY_RATING).toString()) : DEFAULT_RATING;
+        String content = body.get(KEY_CONTENT) != null
+                ? body.get(KEY_CONTENT).toString() : DEFAULT_CONTENT;
+        String images = body.get(KEY_IMAGES) != null
+                ? body.get(KEY_IMAGES).toString() : DEFAULT_IMAGES;
 
         LambdaQueryWrapper<Review> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(Review::getOrderId, orderId)
@@ -177,24 +222,24 @@ public class ReviewController {
     /** 修改单条评价 */
     @PutMapping("/{reviewId}")
     @Transactional
-    public Result<?> updateOne(@PathVariable Long reviewId,
-                                @RequestBody Map<String, Object> body) {
+    public Result<Object> updateOne(@PathVariable Long reviewId,
+                                    @RequestBody Map<String, Object> body) {
         Review review = reviewService.getById(reviewId);
         if (review == null) {
             return Result.error("评价不存在");
         }
-        Long userId = Long.valueOf(body.get("userId").toString());
+        Long userId = Long.valueOf(body.get(KEY_USER_ID).toString());
         if (!review.getUserId().equals(userId)) {
             return Result.error("无权修改他人评价");
         }
-        if (body.get("rating") != null) {
-            review.setRating(Integer.valueOf(body.get("rating").toString()));
+        if (body.get(KEY_RATING) != null) {
+            review.setRating(Integer.valueOf(body.get(KEY_RATING).toString()));
         }
-        if (body.get("content") != null) {
-            review.setContent(body.get("content").toString());
+        if (body.get(KEY_CONTENT) != null) {
+            review.setContent(body.get(KEY_CONTENT).toString());
         }
-        if (body.get("images") != null) {
-            review.setImages(body.get("images").toString());
+        if (body.get(KEY_IMAGES) != null) {
+            review.setImages(body.get(KEY_IMAGES).toString());
         }
         reviewService.updateById(review);
         return Result.ok();
@@ -202,14 +247,13 @@ public class ReviewController {
 
     /** 删除评价（用户删自己，管理员删任意） */
     @DeleteMapping("/{reviewId}")
-    public Result<?> delete(@PathVariable Long reviewId,
-                            @RequestParam Long userId,
-                            @RequestParam(defaultValue = "user") String role) {
+    public Result<Object> delete(@PathVariable Long reviewId,
+                                 @RequestParam Long userId,
+                                 @RequestParam(defaultValue = "user") String role) {
         Review review = reviewService.getById(reviewId);
         if (review == null) {
             return Result.error("评价不存在");
         }
-        // 非管理员只能删除自己的评价
         if (!"admin".equals(role) && !review.getUserId().equals(userId)) {
             return Result.error("无权删除他人评价");
         }

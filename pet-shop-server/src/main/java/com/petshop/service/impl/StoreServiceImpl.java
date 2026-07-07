@@ -3,6 +3,7 @@ package com.petshop.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.petshop.common.BusinessException;
 import com.petshop.dto.StoreDto;
 import com.petshop.entity.Product;
 import com.petshop.entity.Store;
@@ -72,7 +73,7 @@ public class StoreServiceImpl extends ServiceImpl<StoreMapper, Store> implements
         store.setUpdateTime(now);
         store.setDeleted(0);
         if (!save(store)) {
-            throw new RuntimeException("新增店铺失败");
+            throw new BusinessException("新增店铺失败");
         }
         return store;
     }
@@ -84,7 +85,7 @@ public class StoreServiceImpl extends ServiceImpl<StoreMapper, Store> implements
         copyEditableFields(dto, store);
         store.setUpdateTime(LocalDateTime.now());
         if (!updateById(store)) {
-            throw new RuntimeException("修改店铺失败");
+            throw new BusinessException("修改店铺失败");
         }
     }
 
@@ -96,11 +97,11 @@ public class StoreServiceImpl extends ServiceImpl<StoreMapper, Store> implements
         productWrapper.eq(Product::getStoreId, id)
                 .eq(Product::getDeleted, 0);
         if (productMapper.selectCount(productWrapper) > 0) {
-            throw new RuntimeException("该店铺下存在商品，不能删除");
+            throw new BusinessException("该店铺下存在商品，不能删除");
         }
         // 项目当前未启用 @TableLogic，沿用现有 removeById 删除方式。
         if (!removeById(store.getId())) {
-            throw new RuntimeException("删除店铺失败");
+            throw new BusinessException("删除店铺失败");
         }
     }
 
@@ -112,17 +113,17 @@ public class StoreServiceImpl extends ServiceImpl<StoreMapper, Store> implements
         store.setStatus(status);
         store.setUpdateTime(LocalDateTime.now());
         if (!updateById(store)) {
-            throw new RuntimeException("店铺状态修改失败");
+            throw new BusinessException("店铺状态修改失败");
         }
     }
 
     private Store getExistingStore(Long id) {
         if (id == null) {
-            throw new RuntimeException("店铺ID不能为空");
+            throw new BusinessException("店铺ID不能为空");
         }
         Store store = getById(id);
         if (store == null || Integer.valueOf(1).equals(store.getDeleted())) {
-            throw new RuntimeException("店铺不存在");
+            throw new BusinessException("店铺不存在");
         }
         return store;
     }
@@ -152,7 +153,7 @@ public class StoreServiceImpl extends ServiceImpl<StoreMapper, Store> implements
 
     private void validateStatus(Integer status) {
         if (status == null || (status != 0 && status != 1)) {
-            throw new RuntimeException("店铺状态只能是0或1");
+            throw new BusinessException("店铺状态只能是0或1");
         }
     }
 
